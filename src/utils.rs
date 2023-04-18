@@ -1,222 +1,71 @@
-#[derive(Debug, Copy, Clone)]
-pub struct Square {
-    pub x: u8,
-    pub y: u8,
-}
+const PAWN_TAKES: [i32; 2] = [7, 9];
+const PAWN_MOVES: [i32; 1] = [8];
+const KNIGHT_MOVES: [i32; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
+const BISHOP_MOVES: [i32; 13] = [72, 63, 54, 45, 36, 27, 21, 18, 14, 9, 7, -9, -7];
+const ROOK_MOVES: [i32; 14] = [56, 48, 40, 32, 24, 16, 8, -8, -16, -24, -32, -40, -48, -56];
+const QUEEN_MOVES: [i32; 27] = [
+    72, 63, 54, 45, 36, 27, 21, 18, 14, 9, 7, -9, -7, 56, 48, 40, 32, 24, 16, 8, -8, -16, -24, -32,
+    -40, -48, -56,
+];
+const KING_MOVES: [i32; 8] = [9, 8, 7, 1, -1, -7, -8, -9];
 
-impl PartialEq for Square {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-
-#[derive(Debug)]
-pub enum Piece {
-    Pawn(bool, Square),
-    Knight(bool, Square),
-    Bishop(bool, Square),
-    Rook(bool, Square),
-    Queen(bool, Square),
-    King(bool, Square),
-}
-
-impl Piece {
-    pub fn new(piece_type: char, white: bool, x: u8, y: u8) -> Piece {
-        let piece_type = piece_type.to_uppercase().next().unwrap();
-        match piece_type {
-            'K' => Piece::King(white, Square{x, y}),
-            'Q' => Piece::Queen(white, Square{x, y}),
-            'R' => Piece::Rook(white, Square{x, y}),
-            'B' => Piece::Bishop(white, Square{x, y}),
-            'N' => Piece::Knight(white, Square{x, y}),
-            'P' => Piece::Pawn(white, Square{x, y}),
-            _ => panic!("Invalid piece type"),
-        }
-    }
-
-    pub fn new_fen(piece_type: char, x: u8, y: u8) -> Piece {
-        let piece_type = piece_type.to_uppercase().next().unwrap();
-        match piece_type {
-            'K' => Piece::King(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            'Q' => Piece::Queen(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            'R' => Piece::Rook(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            'B' => Piece::Bishop(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            'N' => Piece::Knight(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            'P' => Piece::Pawn(piece_type == piece_type.to_uppercase().next().unwrap(), Square{x, y}),
-            _ => panic!("Invalid piece type"),
-        }
-    }
-
-    pub fn new_san(san: &str) -> Piece {
-        let piece_type = san.chars().nth(0).unwrap();
-        let x = san.chars().nth(1).unwrap();
-        let col = {
-            match x {
-                'a' => 1,
-                'b' => 2,
-                'c' => 3,
-                'd' => 4,
-                'e' => 5,
-                'f' => 6,
-                'g' => 7,
-                'h' => 8,
-                _ => panic!("Invalid column"),
-            }
-        };
-        let row = san.chars().nth(2).unwrap() as u8 - 49;
-
-        Self::new(piece_type, piece_type == piece_type.to_uppercase().next().unwrap(), col, row)
-    }
-
-    fn get_fen(&self) -> String {
-        match self {
-            Piece::Pawn(white, Square{x, y}) => {
-                if *white {
-                    format!("P{}{}", x, y)
-                } else {
-                    format!("p{}{}", x, y)
-                }
-            },
-            Piece::Knight(white, Square{x, y}) => {
-                if *white {
-                    format!("N{}{}", x, y)
-                } else {
-                    format!("n{}{}", x, y)
-                }
-            },
-            Piece::Bishop(white, Square{x, y}) => {
-                if *white {
-                    format!("B{}{}", x, y)
-                } else {
-                    format!("b{}{}", x, y)
-                }
-            },
-            Piece::Rook(white, Square{x, y}) => {
-                if *white {
-                    format!("R{}{}", x, y)
-                } else {
-                    format!("r{}{}", x, y)
-                }
-            },
-            Piece::Queen(white, Square{x, y}) => {
-                if *white {
-                    format!("Q{}{}", x, y)
-                } else {
-                    format!("q{}{}", x, y)
-                }
-            },
-            Piece::King(white, Square{x, y}) => {
-                if *white {
-                    format!("K{}{}", x, y)
-                } else {
-                    format!("k{}{}", x, y)
-                }
-            },
-        }
-    }
-
-    fn get_square(&self) -> Square {
-        match self {
-            Piece::Pawn(_, square)
-            | Piece::Knight(_, square)
-            | Piece::Bishop(_, square)
-            | Piece::Rook(_, square)
-            | Piece::Queen(_, square)
-            | Piece::King(_, square) => *square,
-        }
-    }
-
-    fn set_square(&mut self, square: Square) {
-        match self {
-            Piece::Pawn(_, ref mut s)
-            | Piece::Knight(_, ref mut s)
-            | Piece::Bishop(_, ref mut s)
-            | Piece::Rook(_, ref mut s)
-            | Piece::Queen(_, ref mut s)
-            | Piece::King(_, ref mut s) => *s = square,
-        }
-    }
-
-}
-
-impl std::fmt::Display for Piece{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Piece::King(white, Square{x, y}) => write!(f, "{} King at {}, {}", if *white { "White" } else { "Black" }, x, y),
-            Piece::Queen(white, Square{x, y}) => write!(f, "{} Queen at {}, {}", if *white { "White" } else { "Black" }, x, y),
-            Piece::Rook(white, Square{x, y}) => write!(f, "{} Rook at {}, {}", if *white { "White" } else { "Black" }, x, y),
-            Piece::Bishop(white, Square{x, y}) => write!(f, "{} Bishop at {}, {}", if *white { "White" } else { "Black" }, x, y),
-            Piece::Knight(white, Square{x, y}) => write!(f, "{} Knight at {}, {}", if *white { "White" } else { "Black" }, x, y),
-            Piece::Pawn(white, Square{x, y}) => write!(f, "{} Pawn at {}, {}", if *white { "White" } else { "Black" }, x, y),
-        }
-    }
-}
+const FILE_A: u64 = 72340172838076673;
+const FILE_B: u64 = 144680345676153346;
+const FILE_C: u64 = 289360691352306692;
+const FILE_D: u64 = 578721382704613384;
+const FILE_E: u64 = 1157442765409226768;
+const FILE_F: u64 = 2314885530818453536;
+const FILE_G: u64 = 4629771061636907072;
+const FILE_H: u64 = 9259542123273814144;
+const RANK_1: u64 = 255;
+const RANK_2: u64 = 65280;
+const RANK_3: u64 = 16711680;
+const RANK_4: u64 = 4278190080;
+const RANK_5: u64 = 1095216660480;
+const RANK_6: u64 = 280375465082880;
+const RANK_7: u64 = 71776119061217280;
+const RANK_8: u64 = 18374686479671623680;
+const CENTER: u64 = 103481868288;
+const EXTENDED_CENTER: u64 = 66229406269440;
+const KING_SIDE: u64 = 9295429630892703744;
+const QUEEN_SIDE: u64 = 4755801206503243840;
+const WHITE_SQUARES: u64 = 2863311530;
+const BLACK_SQUARES: u64 = 1431655765;
 
 #[derive(Debug)]
 pub struct Board {
-    pieces: Vec<Piece>,
+    white_pawns: u64,
+    white_knights: u64,
+    white_bishops: u64,
+    white_rooks: u64,
+    white_queens: u64,
+    white_king: u64,
+    black_pawns: u64,
+    black_knights: u64,
+    black_bishops: u64,
+    black_rooks: u64,
+    black_queens: u64,
+    black_king: u64,
+    /* All squares that black can capture (white but not king) */
+    white_pieces: u64,
+    /* All squares that white can capture (black but not king) */
+    black_pieces: u64,
+    /* All empty squares */
+    empty_squares: u64,
+    en_passant: u64,
     white_turn: bool,
     white_castle_kingside: bool,
     white_castle_queenside: bool,
     black_castle_kingside: bool,
     black_castle_queenside: bool,
-    en_passant: Vec<Square>,
-    halfmove: u16,
-    fullmove: u16,
+    halfmove: u8,
+    fullmove: u8,
 }
 
 impl Board {
-    pub fn starting_pos() -> Board {
-        Board {
-            pieces: vec![
-                Piece::new('R', false, 0, 0),
-                Piece::new('N', false, 1, 0),
-                Piece::new('B', false, 2, 0),
-                Piece::new('Q', false, 3, 0),
-                Piece::new('K', false, 4, 0),
-                Piece::new('B', false, 5, 0),
-                Piece::new('N', false, 6, 0),
-                Piece::new('R', false, 7, 0),
-                Piece::new('P', false, 0, 1),
-                Piece::new('P', false, 1, 1),
-                Piece::new('P', false, 2, 1),
-                Piece::new('P', false, 3, 1),
-                Piece::new('P', false, 4, 1),
-                Piece::new('P', false, 5, 1),
-                Piece::new('P', false, 6, 1),
-                Piece::new('P', false, 7, 1),
-                Piece::new('P', true, 0, 6),
-                Piece::new('P', true, 1, 6),
-                Piece::new('P', true, 2, 6),
-                Piece::new('P', true, 3, 6),
-                Piece::new('P', true, 4, 6),
-                Piece::new('P', true, 5, 6),
-                Piece::new('P', true, 6, 6),
-                Piece::new('P', true, 7, 6),
-                Piece::new('R', true, 0, 7),
-                Piece::new('N', true, 1, 7),
-                Piece::new('B', true, 2, 7),
-                Piece::new('Q', true, 3, 7),
-                Piece::new('K', true, 4, 7),
-                Piece::new('B', true, 5, 7),
-                Piece::new('N', true, 6, 7),
-                Piece::new('R', true, 7, 7),
-            ],
-            white_turn: true,
-            white_castle_kingside: true,
-            white_castle_queenside: true,
-            black_castle_kingside: true,
-            black_castle_queenside: true,
-            en_passant: vec![],
-            halfmove: 0,
-            fullmove: 0,
-        }
-    }
-
-    pub fn new_fen(input: &str) -> Board {
-
-        let mut row = 8;
-        let mut col = 1;
+    pub fn new(input: &str) -> Board {
+        let mut row = 7;
+        let mut col = 0;
 
         let fen: Vec<&str> = input.split_whitespace().collect();
 
@@ -227,13 +76,24 @@ impl Board {
         let fen_half_move = fen.get(4);
         let fen_full_move = fen.get(5);
 
-        let mut pieces = vec![];
+        let mut white_pawns: u64 = 0;
+        let mut white_knights: u64 = 0;
+        let mut white_bishops: u64 = 0;
+        let mut white_rooks: u64 = 0;
+        let mut white_queens: u64 = 0;
+        let mut white_king: u64 = 0;
+        let mut black_pawns: u64 = 0;
+        let mut black_knights: u64 = 0;
+        let mut black_bishops: u64 = 0;
+        let mut black_rooks: u64 = 0;
+        let mut black_queens: u64 = 0;
+        let mut black_king: u64 = 0;
         let white_turn;
         let mut white_castle_kingside = false;
         let mut white_castle_queenside = false;
         let mut black_castle_kingside = false;
         let mut black_castle_queenside = false;
-        let mut en_passant: Vec<Square> = vec![];
+        let mut en_passant: u64 = 0;
         let halfmove;
         let fullmove;
 
@@ -244,23 +104,36 @@ impl Board {
                         col += c as u8 - 48;
                     } else if c == '/' {
                         row -= 1;
-                        col = 1;
+                        col = 0;
                     } else {
-                        pieces.push(Piece::new_fen(c, col, row));
+                        let pos: u64 = 1u64 << (row as u32 * 8 + col as u32);
+                        match c {
+                            'P' => white_pawns += pos,
+                            'N' => white_knights += pos,
+                            'B' => white_bishops += pos,
+                            'R' => white_rooks += pos,
+                            'Q' => white_queens += pos,
+                            'K' => white_king += pos,
+                            'p' => black_pawns += pos,
+                            'n' => black_knights += pos,
+                            'b' => black_bishops += pos,
+                            'r' => black_rooks += pos,
+                            'q' => black_queens += pos,
+                            'k' => black_king += pos,
+                            _ => panic!("Invalid FEN string"),
+                        }
                         col += 1;
                     }
                 }
-            },
+            }
             None => panic!("Invalid FEN string"),
         }
 
         match fen_turn {
-            Some(fen_turn) => {
-                match *fen_turn {
-                    "w" => white_turn = true,
-                    "b" => white_turn = false,
-                    _ => panic!("Invalid FEN string"),
-                }
+            Some(fen_turn) => match *fen_turn {
+                "w" => white_turn = true,
+                "b" => white_turn = false,
+                _ => panic!("Invalid FEN string"),
             },
             None => panic!("Invalid FEN string"),
         }
@@ -277,7 +150,7 @@ impl Board {
                         _ => panic!("Invalid FEN string"),
                     }
                 }
-            },
+            }
             None => panic!("Invalid FEN string"),
         }
 
@@ -286,63 +159,90 @@ impl Board {
                 if *fen_en_passant != "-" {
                     let col = fen_en_passant.chars().nth(0).unwrap() as u8 - 97;
                     let row = fen_en_passant.chars().nth(1).unwrap() as u8 - 49;
-                    en_passant.push(Square{x: col, y: row});
+                    en_passant += 1u64 << (row as u32 * 8 + col as u32);
                 }
-            },
+            }
             None => panic!("Invalid FEN string"),
         }
 
         match fen_half_move {
             Some(fen_half_move) => {
-                let half_move = fen_half_move.parse::<u16>();
+                let half_move = fen_half_move.parse::<u8>();
                 match half_move {
                     Ok(half_move) => halfmove = half_move,
                     Err(_) => panic!("Invalid FEN string"),
                 }
-            },
+            }
             None => panic!("Invalid FEN string"),
         }
 
         match fen_full_move {
             Some(fen_full_move) => {
-                let full_move = fen_full_move.parse::<u16>();
+                let full_move = fen_full_move.parse::<u8>();
                 match full_move {
                     Ok(full_move) => fullmove = full_move,
                     Err(_) => panic!("Invalid FEN string"),
                 }
-            },
+            }
             None => panic!("Invalid FEN string"),
         }
-        
-        Board { pieces: pieces, white_turn, white_castle_kingside, white_castle_queenside, black_castle_kingside, black_castle_queenside, en_passant, halfmove, fullmove }
+
+        let white_pieces: u64 = white_pawns | white_knights | white_bishops | white_rooks | white_queens;
+        let black_pieces: u64 = black_pawns | black_knights | black_bishops | black_rooks | black_queens;
+        let empty_squares: u64 = !(white_pieces | black_pieces);
+
+        Board {
+            white_pawns,
+            white_knights,
+            white_bishops,
+            white_rooks,
+            white_queens,
+            white_king,
+            black_pawns,
+            black_knights,
+            black_bishops,
+            black_rooks,
+            black_queens,
+            black_king,
+            white_pieces,
+            black_pieces,
+            empty_squares,
+            white_turn,
+            white_castle_kingside,
+            white_castle_queenside,
+            black_castle_kingside,
+            black_castle_queenside,
+            en_passant,
+            halfmove,
+            fullmove,
+        }
     }
 
     pub fn export_fen(&self) -> String {
         let mut fen = String::new();
         let mut empty = 0;
 
-        for row in (1..9).rev() {
-            for col in 1..9 {
-                let square = Square{x: col, y: row};
-                let piece = self.get_square(square);
+        for row in (0..8).rev() {
+            for col in 0..8 {
+                let piece = self.get_square(row, col);
                 match piece {
                     Some(piece) => {
                         if empty > 0 {
                             fen.push_str(&empty.to_string());
                             empty = 0;
                         }
-                        fen.push(piece.get_fen().chars().next().unwrap());
-                    },
+                        fen.push(piece);
+                    }
                     None => {
                         empty += 1;
-                    },
+                    }
                 }
             }
             if empty > 0 {
                 fen.push_str(&empty.to_string());
                 empty = 0;
             }
-            if row > 1 {
+            if row > 0 {
                 fen.push('/');
             }
         }
@@ -369,15 +269,22 @@ impl Board {
         if self.black_castle_queenside {
             fen.push('q');
         }
-        if !self.white_castle_kingside && !self.white_castle_queenside && !self.black_castle_kingside && !self.black_castle_queenside {
+        if !self.white_castle_kingside
+            && !self.white_castle_queenside
+            && !self.black_castle_kingside
+            && !self.black_castle_queenside
+        {
             fen.push('-');
         }
 
         fen.push(' ');
 
-        if self.en_passant.len() > 0 {
-            fen.push((self.en_passant[0].x + 97) as char);
-            fen.push((self.en_passant[0].y + 49) as char);
+        if self.en_passant > 0 {
+            let row: u8 = (self.en_passant / 7) as u8;
+            let col: u8 = (self.en_passant % 7) as u8;
+
+            fen.push((col + 97) as char);
+            fen.push((row + 49) as char);
         } else {
             fen.push('-');
         }
@@ -393,14 +300,71 @@ impl Board {
         fen
     }
 
-    pub fn get_square(&self, square: Square) -> Option<&Piece>{
-        for piece in &self.pieces {
-            if piece.get_square() == square {
-                return Some(piece);
-            }
+    pub fn get_square(&self, row: u8, col: u8) -> Option<char> {
+
+        if self.white_pawns & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('P');
         }
+        if self.white_knights & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('N');
+        }
+        if self.white_bishops & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('B');
+        }
+        if self.white_rooks & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('R');
+        }
+        if self.white_queens & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('Q');
+        }
+        if self.white_king & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('K');
+        }
+        if self.black_pawns & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('p');
+        }
+        if self.black_knights & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('n');
+        }
+        if self.black_bishops & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('b');
+        }
+        if self.black_rooks & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('r');
+        }
+        if self.black_queens & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('q');
+        }
+        if self.black_king & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+            return Some('k');
+        }
+
         return None;
     }
 
+    pub fn board_display(&self) -> String {
+        let mut board = String::new();
+        for row in (0..8).rev() {
+            for col in 0..8 {
+                let piece = self.get_square(row, col);
+                match piece {
+                    Some(piece) => {
+                        board.push(piece);
+                    }
+                    None => {
+                        board.push('.');
+                    }
+                }
+                if col < 7 {
+                    board.push(' ');
+                }
+            }
+            if row > 0 {
+                board.push('\n');
+            }
+        }
+
+        board
+    }
 
 }

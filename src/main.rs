@@ -1,5 +1,5 @@
-use crate::utils::{Board, Piece};
-use clap::{Parser, Subcommand};
+use crate::utils::Board;
+use clap::Parser;
 
 mod utils;
 
@@ -32,7 +32,13 @@ fn main() {
         None => panic!("No FEN string provided"),
     };
 
-    let start_board = Board::new_fen(&fen);
-    println!("{:?}", start_board);
+    let start_board = Board::new(&fen);
+    println!("====FEN String===");
+    println!("-----------------");
     println!("{}", start_board.export_fen());
+    println!("-----------------");
+    println!("==Board Display==");
+    println!("-----------------");
+    println!("{}", start_board.board_display());
+    println!("-----------------");
 }
