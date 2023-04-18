@@ -46,7 +46,7 @@ fn main() {
     println!("-----------------");
     println!("==Board Display==");
     println!("-----------------");
-    println!("{}", start_board.board_display());
+    println!("{}", start_board);
     println!("-----------------");
 }
 

@@ -1,3 +1,5 @@
+use std::fmt;
+
 const PAWN_TAKES: [i32; 2] = [7, 9];
 const PAWN_MOVES: [i32; 1] = [8];
 const KNIGHT_MOVES: [i32; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
@@ -349,31 +351,6 @@ impl Board {
         return None;
     }
 
-    pub fn board_display(&self) -> String {
-        let mut board = String::new();
-        for row in (0..8).rev() {
-            for col in 0..8 {
-                let piece = self.get_square(row, col);
-                match piece {
-                    Some(piece) => {
-                        board.push(piece);
-                    }
-                    None => {
-                        board.push('.');
-                    }
-                }
-                if col < 7 {
-                    board.push(' ');
-                }
-            }
-            if row > 0 {
-                board.push('\n');
-            }
-        }
-
-        board
-    }
-
     pub fn possible_white(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -570,5 +547,33 @@ impl Board {
 
     pub fn possible_bk(&self) -> Vec<Move> {
         vec![]
+    }
+}
+
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        
+        let mut board = String::new();
+        for row in (0..8).rev() {
+            for col in 0..8 {
+                let piece = self.get_square(row, col);
+                match piece {
+                    Some(piece) => {
+                        board.push(piece);
+                    }
+                    None => {
+                        board.push('.');
+                    }
+                }
+                if col < 7 {
+                    board.push(' ');
+                }
+            }
+            if row > 0 {
+                board.push('\n');
+            }
+        }
+
+        write!(f, "{}", board)
     }
 }
