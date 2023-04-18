@@ -374,6 +374,32 @@ impl Board {
         board
     }
 
+    pub fn possible_white(&self) -> Vec<Move> {
+        let mut moves: Vec<Move> = Vec::new();
+
+        moves.append(&mut self.possible_wp());
+        moves.append(&mut self.possible_wk());
+        moves.append(&mut self.possible_wq());
+        moves.append(&mut self.possible_wr());
+        moves.append(&mut self.possible_wb());
+        moves.append(&mut self.possible_wn());
+
+        moves
+    }
+
+    pub fn possible_black(&self) -> Vec<Move> {
+        let mut moves: Vec<Move> = Vec::new();
+
+        moves.append(&mut self.possible_bp());
+        moves.append(&mut self.possible_bk());
+        moves.append(&mut self.possible_bq());
+        moves.append(&mut self.possible_br());
+        moves.append(&mut self.possible_bb());
+        moves.append(&mut self.possible_bn());
+
+        moves
+    }
+
     pub fn possible_wp(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -396,9 +422,7 @@ impl Board {
         }
 
         // Pawn forward one
-        pawn_moves = (self.white_pawns << 8)
-            & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
-            & !RANK_1;
+        pawn_moves = (self.white_pawns << 8) & self.empty_squares & !RANK_1;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -408,10 +432,7 @@ impl Board {
 
         // Pawn forward two
         pawn_moves = (pawn_moves << 8)
-            & ((self.white_pawns & RANK_2) << 16
-                & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
-                & !RANK_1
-                & !RANK_2);
+            & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & !RANK_1 & !RANK_2);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -445,6 +466,26 @@ impl Board {
         moves
     }
 
+    pub fn possible_wn(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_wb(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_wr(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_wq(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_wk(&self) -> Vec<Move> {
+        vec![]
+    }
+
     pub fn possible_bp(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -462,17 +503,12 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Move {
-                    from: i + 7,
-                    to: i,
-                });
+                moves.push(Move { from: i + 7, to: i });
             }
         }
 
         // Pawn forward one
-        pawn_moves = (self.black_pawns >> 8)
-            & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
-            & !RANK_8;
+        pawn_moves = (self.black_pawns >> 8) & self.empty_squares & !RANK_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -482,10 +518,7 @@ impl Board {
 
         // Pawn forward two
         pawn_moves = (pawn_moves >> 8)
-            & ((self.black_pawns & RANK_7) >> 16
-                & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
-                & !RANK_8
-                & !RANK_7);
+            & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & !RANK_8 & !RANK_7);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -498,7 +531,7 @@ impl Board {
 
         // Pawn SW en passant
         pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
-        
+
         if pawn_moves != 0 && self.white_turn {
             moves.push(Move {
                 from: self.en_passant + 9,
@@ -517,5 +550,25 @@ impl Board {
         }
 
         moves
+    }
+
+    pub fn possible_bn(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_bb(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_br(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_bq(&self) -> Vec<Move> {
+        vec![]
+    }
+
+    pub fn possible_bk(&self) -> Vec<Move> {
+        vec![]
     }
 }
