@@ -32,6 +32,12 @@ const QUEEN_SIDE: u64 = 4755801206503243840;
 const WHITE_SQUARES: u64 = 2863311530;
 const BLACK_SQUARES: u64 = 1431655765;
 
+#[derive(Debug, PartialEq)]
+pub struct Move {
+    pub from: u8,
+    pub to: u8,
+}
+
 #[derive(Debug)]
 pub struct Board {
     white_pawns: u64,
@@ -52,7 +58,7 @@ pub struct Board {
     black_pieces: u64,
     /* All empty squares */
     empty_squares: u64,
-    en_passant: u64,
+    en_passant: u8,
     white_turn: bool,
     white_castle_kingside: bool,
     white_castle_queenside: bool,
@@ -93,7 +99,7 @@ impl Board {
         let mut white_castle_queenside = false;
         let mut black_castle_kingside = false;
         let mut black_castle_queenside = false;
-        let mut en_passant: u64 = 0;
+        let mut en_passant: u8 = 0;
         let halfmove;
         let fullmove;
 
@@ -159,7 +165,7 @@ impl Board {
                 if *fen_en_passant != "-" {
                     let col = fen_en_passant.chars().nth(0).unwrap() as u8 - 97;
                     let row = fen_en_passant.chars().nth(1).unwrap() as u8 - 49;
-                    en_passant += 1u64 << (row as u32 * 8 + col as u32);
+                    en_passant = row * 8 + col;
                 }
             }
             None => panic!("Invalid FEN string"),
@@ -187,8 +193,10 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
-        let white_pieces: u64 = white_pawns | white_knights | white_bishops | white_rooks | white_queens;
-        let black_pieces: u64 = black_pawns | black_knights | black_bishops | black_rooks | black_queens;
+        let white_pieces: u64 =
+            white_pawns | white_knights | white_bishops | white_rooks | white_queens;
+        let black_pieces: u64 =
+            black_pawns | black_knights | black_bishops | black_rooks | black_queens;
         let empty_squares: u64 = !(white_pieces | black_pieces);
 
         Board {
@@ -222,7 +230,7 @@ impl Board {
         let mut fen = String::new();
         let mut empty = 0;
 
-        for row in (0..8).rev() {
+        for row in 0..8 {
             for col in 0..8 {
                 let piece = self.get_square(row, col);
                 match piece {
@@ -301,7 +309,6 @@ impl Board {
     }
 
     pub fn get_square(&self, row: u8, col: u8) -> Option<char> {
-
         if self.white_pawns & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
             return Some('P');
         }
@@ -367,4 +374,148 @@ impl Board {
         board
     }
 
+    pub fn possible_wp(&self) -> Vec<Move> {
+        let mut moves: Vec<Move> = Vec::new();
+
+        // Pawn NE captures
+        let mut pawn_moves = (self.white_pawns << 9) & !FILE_A & self.black_pieces & !RANK_1;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move { from: i - 9, to: i });
+            }
+        }
+
+        // Pawn NW captures
+        pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & !RANK_1;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move { from: i - 7, to: i });
+            }
+        }
+
+        // Pawn forward one
+        pawn_moves = (self.white_pawns << 8)
+            & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
+            & !RANK_1;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move { from: i - 8, to: i });
+            }
+        }
+
+        // Pawn forward two
+        pawn_moves = (pawn_moves << 8)
+            & ((self.white_pawns & RANK_2) << 16
+                & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
+                & !RANK_1
+                & !RANK_2);
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move {
+                    from: i - 16,
+                    to: i,
+                });
+            }
+        }
+
+        // Pawn NE en passant
+        pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << self.en_passant);
+
+        if pawn_moves != 0 && self.white_turn {
+            moves.push(Move {
+                from: self.en_passant - 9,
+                to: self.en_passant,
+            });
+        }
+
+        // Pawn NW en passant
+        pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << self.en_passant);
+
+        if pawn_moves != 0 && self.white_turn {
+            moves.push(Move {
+                from: self.en_passant - 7,
+                to: self.en_passant,
+            });
+        }
+
+        moves
+    }
+
+    pub fn possible_bp(&self) -> Vec<Move> {
+        let mut moves: Vec<Move> = Vec::new();
+
+        // Pawn SW captures
+        let mut pawn_moves = (self.black_pawns >> 9) & !FILE_H & self.white_pieces & !RANK_8;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move { from: i + 9, to: i });
+            }
+        }
+
+        // Pawn SE captures
+        pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & !RANK_8;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move {
+                    from: i + 7,
+                    to: i,
+                });
+            }
+        }
+
+        // Pawn forward one
+        pawn_moves = (self.black_pawns >> 8)
+            & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
+            & !RANK_8;
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move { from: i + 8, to: i });
+            }
+        }
+
+        // Pawn forward two
+        pawn_moves = (pawn_moves >> 8)
+            & ((self.black_pawns & RANK_7) >> 16
+                & !(self.white_pieces | self.black_pieces | self.white_king | self.black_king)
+                & !RANK_8
+                & !RANK_7);
+
+        for i in 0..64 {
+            if pawn_moves & (1u64 << i) != 0 {
+                moves.push(Move {
+                    from: i + 16,
+                    to: i,
+                });
+            }
+        }
+
+        // Pawn SW en passant
+        pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
+        
+        if pawn_moves != 0 && self.white_turn {
+            moves.push(Move {
+                from: self.en_passant + 9,
+                to: self.en_passant,
+            });
+        }
+
+        // Pawn SE en passant
+        pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
+
+        if pawn_moves != 0 && self.white_turn {
+            moves.push(Move {
+                from: self.en_passant + 7,
+                to: self.en_passant,
+            });
+        }
+
+        moves
+    }
 }
