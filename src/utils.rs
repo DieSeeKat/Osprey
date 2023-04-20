@@ -1,15 +1,4 @@
-use std::fmt;
-
-const PAWN_TAKES: [i32; 2] = [7, 9];
-const PAWN_MOVES: [i32; 1] = [8];
-const KNIGHT_MOVES: [i32; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
-const BISHOP_MOVES: [i32; 13] = [72, 63, 54, 45, 36, 27, 21, 18, 14, 9, 7, -9, -7];
-const ROOK_MOVES: [i32; 14] = [56, 48, 40, 32, 24, 16, 8, -8, -16, -24, -32, -40, -48, -56];
-const QUEEN_MOVES: [i32; 27] = [
-    72, 63, 54, 45, 36, 27, 21, 18, 14, 9, 7, -9, -7, 56, 48, 40, 32, 24, 16, 8, -8, -16, -24, -32,
-    -40, -48, -56,
-];
-const KING_MOVES: [i32; 8] = [9, 8, 7, 1, -1, -7, -8, -9];
+use std::{collections::HashMap, fmt};
 
 const FILE_A: u64 = 72340172838076673;
 const FILE_B: u64 = 144680345676153346;
@@ -33,6 +22,48 @@ const KING_SIDE: u64 = 9295429630892703744;
 const QUEEN_SIDE: u64 = 4755801206503243840;
 const WHITE_SQUARES: u64 = 2863311530;
 const BLACK_SQUARES: u64 = 1431655765;
+
+const RANKS: [u64; 8] = [
+    RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
+];
+const FILES: [u64; 8] = [
+    FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
+];
+const DIAGONALS: [u64; 15] = [
+    0x1,
+    0x102,
+    0x10204,
+    0x1020408,
+    0x102040810,
+    0x10204081020,
+    0x1020408102040,
+    0x102040810204080,
+    0x204081020408000,
+    0x408102040800000,
+    0x810204080000000,
+    0x1020408000000000,
+    0x2040800000000000,
+    0x4080000000000000,
+    0x8000000000000000,
+];
+
+const ANTI_DIAGONALS: [u64; 15] = [
+    0x80,
+    0x8040,
+    0x804020,
+    0x80402010,
+    0x8040201008,
+    0x804020100804,
+    0x80402010080402,
+    0x8040201008040201,
+    0x4020100804020100,
+    0x2010080402010000,
+    0x1008040201000000,
+    0x804020100000000,
+    0x402010000000000,
+    0x201000000000000,
+    0x100000000000000,
+];
 
 #[derive(Debug, PartialEq)]
 pub enum Move {
@@ -236,7 +267,7 @@ impl Board {
 
         for row in 0..8 {
             for col in 0..8 {
-                let piece = self.get_square(row, col);
+                let piece = self.square(row * 8 + col);
                 match piece {
                     Some(piece) => {
                         if empty > 0 {
@@ -312,45 +343,85 @@ impl Board {
         fen
     }
 
-    pub fn get_square(&self, row: u8, col: u8) -> Option<char> {
-        if self.white_pawns & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+    pub fn square(&self, position: u8) -> Option<char> {
+        if self.white_pawns & (1u64 << position) != 0 {
             return Some('P');
         }
-        if self.white_knights & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.white_knights & (1u64 << position) != 0 {
             return Some('N');
         }
-        if self.white_bishops & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.white_bishops & (1u64 << position) != 0 {
             return Some('B');
         }
-        if self.white_rooks & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.white_rooks & (1u64 << position) != 0 {
             return Some('R');
         }
-        if self.white_queens & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.white_queens & (1u64 << position) != 0 {
             return Some('Q');
         }
-        if self.white_king & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.white_king & (1u64 << position) != 0 {
             return Some('K');
         }
-        if self.black_pawns & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_pawns & (1u64 << position) != 0 {
             return Some('p');
         }
-        if self.black_knights & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_knights & (1u64 << position) != 0 {
             return Some('n');
         }
-        if self.black_bishops & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_bishops & (1u64 << position) != 0 {
             return Some('b');
         }
-        if self.black_rooks & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_rooks & (1u64 << position) != 0 {
             return Some('r');
         }
-        if self.black_queens & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_queens & (1u64 << position) != 0 {
             return Some('q');
         }
-        if self.black_king & (1u64 << (row as u32 * 8 + col as u32)) != 0 {
+        if self.black_king & (1u64 << position) != 0 {
             return Some('k');
         }
 
         return None;
+    }
+
+    pub fn possible_hv(&self, position: u8) -> u64 {
+        let slider = 1u64 << position;
+        let occupied = !self.empty_squares;
+
+        let horizontal = (occupied.wrapping_sub(2 * slider))
+            ^ (occupied
+                .reverse_bits()
+                .wrapping_sub(2 * slider.reverse_bits()))
+            .reverse_bits();
+        let vertical = ((occupied & FILES[position as usize % 8]).wrapping_sub(2 * slider))
+            ^ ((occupied & FILES[position as usize % 8])
+                .reverse_bits()
+                .wrapping_sub(2 * slider.reverse_bits()))
+            .reverse_bits();
+
+        (horizontal & RANKS[(position / 8) as usize]) | (vertical & FILES[(position % 8) as usize])
+    }
+
+    pub fn possible_da(&self, position: u8) -> u64 {
+        let slider = 1u64 << position;
+        let occupied = !self.empty_squares;
+
+        let diagonal = (occupied & DIAGONALS[position as usize / 8 + position as usize % 8])
+            .wrapping_sub(2 * slider)
+            ^ (occupied & DIAGONALS[position as usize / 8 + position as usize % 8])
+                .reverse_bits()
+                .wrapping_sub(2 * slider.reverse_bits())
+                .reverse_bits();
+        let anti_diagonal = (occupied
+            & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
+            .wrapping_sub(2 * slider)
+            ^ (occupied & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
+                .reverse_bits()
+                .wrapping_sub(2 * slider.reverse_bits())
+                .reverse_bits();
+
+        (diagonal & DIAGONALS[position as usize / 8 + position as usize % 8])
+            | (anti_diagonal & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
     }
 
     pub fn possible_white(&self) -> Vec<Move> {
@@ -380,45 +451,49 @@ impl Board {
     }
 
     pub fn possible_wp(&self) -> Vec<Move> {
-        
         use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
         // Pawn NE captures
-        let mut pawn_moves = (self.white_pawns << 9) & !FILE_A & self.black_pieces & !RANK_1 & !RANK_8;
+
+        let mut pawn_moves =
+            (self.white_pawns << 9) & !FILE_A & self.black_pieces & !RANK_1 & !RANK_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i - 9, to: i });
+                moves.push(Normal { from: i - 9, to: i });
             }
         }
 
         // Pawn NW captures
+
         pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & !RANK_1 & !RANK_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i - 7, to: i });
+                moves.push(Normal { from: i - 7, to: i });
             }
         }
 
         // Pawn forward one
+
         pawn_moves = (self.white_pawns << 8) & self.empty_squares & !RANK_1 & !RANK_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i - 8, to: i });
+                moves.push(Normal { from: i - 8, to: i });
             }
         }
 
         // Pawn forward two
+
         pawn_moves = (pawn_moves << 8)
             & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & !RANK_1 & !RANK_2);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{
+                moves.push(Normal {
                     from: i - 16,
                     to: i,
                 });
@@ -432,10 +507,10 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i - 8,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
@@ -448,10 +523,10 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i - 9,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
@@ -464,20 +539,21 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i - 7,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
         }
 
         // Pawn NE en passant
+
         pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << self.en_passant);
 
         if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant{
+            moves.push(EnPassant {
                 from: self.en_passant - 9,
                 to: self.en_passant,
                 captured: self.en_passant - 8,
@@ -485,10 +561,11 @@ impl Board {
         }
 
         // Pawn NW en passant
+
         pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << self.en_passant);
 
         if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant{
+            moves.push(EnPassant {
                 from: self.en_passant - 7,
                 to: self.en_passant,
                 captured: self.en_passant - 8,
@@ -503,11 +580,39 @@ impl Board {
     }
 
     pub fn possible_wb(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.white_bishops & (1u64 << i) != 0 {
+                let bishop_moves = self.possible_da(i) & !self.white_pieces;
+
+                for j in 0..64 {
+                    if bishop_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_wr(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.white_rooks & (1u64 << i) != 0 {
+                let rook_moves = self.possible_hv(i) & !self.white_pieces;
+
+                for j in 0..64 {
+                    if rook_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_wq(&self) -> Vec<Move> {
@@ -519,45 +624,49 @@ impl Board {
     }
 
     pub fn possible_bp(&self) -> Vec<Move> {
-        
         use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
         // Pawn SW captures
-        let mut pawn_moves = (self.black_pawns >> 9) & !FILE_H & self.white_pieces & !RANK_8 & !RANK_1;
+
+        let mut pawn_moves =
+            (self.black_pawns >> 9) & !FILE_H & self.white_pieces & !RANK_8 & !RANK_1;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i + 9, to: i });
+                moves.push(Normal { from: i + 9, to: i });
             }
         }
 
         // Pawn SE captures
+
         pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & !RANK_8 & !RANK_1;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i + 7, to: i });
+                moves.push(Normal { from: i + 7, to: i });
             }
         }
 
         // Pawn forward one
+
         pawn_moves = (self.black_pawns >> 8) & self.empty_squares & !RANK_8 & !RANK_1;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{ from: i + 8, to: i });
+                moves.push(Normal { from: i + 8, to: i });
             }
         }
 
         // Pawn forward two
+
         pawn_moves = (pawn_moves >> 8)
             & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & !RANK_8 & !RANK_7);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Normal{
+                moves.push(Normal {
                     from: i + 16,
                     to: i,
                 });
@@ -571,10 +680,10 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['q', 'r', 'b', 'n'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i + 8,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
@@ -587,10 +696,10 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['q', 'r', 'b', 'n'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i + 9,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
@@ -603,20 +712,21 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['q', 'r', 'b', 'n'].iter() {
-                    moves.push(Promotion{
+                    moves.push(Promotion {
                         from: i + 7,
                         to: i,
-                        promotion : *promotion,
+                        promotion: *promotion,
                     });
                 }
             }
         }
 
         // Pawn SW en passant
+
         pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
 
         if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant{
+            moves.push(EnPassant {
                 from: self.en_passant + 9,
                 to: self.en_passant,
                 captured: self.en_passant + 8,
@@ -624,10 +734,11 @@ impl Board {
         }
 
         // Pawn SE en passant
+
         pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
 
         if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant{
+            moves.push(EnPassant {
                 from: self.en_passant + 7,
                 to: self.en_passant,
                 captured: self.en_passant + 8,
@@ -642,11 +753,39 @@ impl Board {
     }
 
     pub fn possible_bb(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.black_bishops & (1u64 << i) != 0 {
+                let bishop_moves = self.possible_da(i) & !self.black_pieces;
+
+                for j in 0..64 {
+                    if bishop_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_br(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.black_rooks & (1u64 << i) != 0 {
+                let rook_moves = self.possible_hv(i) & !self.black_pieces;
+
+                for j in 0..64 {
+                    if rook_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_bq(&self) -> Vec<Move> {
@@ -663,7 +802,7 @@ impl fmt::Display for Board {
         let mut board = String::new();
         for row in (0..8).rev() {
             for col in 0..8 {
-                let piece = self.get_square(row, col);
+                let piece = self.square(row * 8 + col);
                 match piece {
                     Some(piece) => {
                         board.push(piece);
@@ -687,14 +826,14 @@ impl fmt::Display for Board {
 
 #[cfg(test)]
 mod pawn_moves {
-    use Move::*;
     use crate::utils::{Board, Move};
+    use Move::*;
 
     #[test]
     fn pawn_capture_nw() {
         let board = Board::new("8/8/8/p5pp/P6P/8/8/8 w - - 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 31, to: 38 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 31, to: 38 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -705,7 +844,7 @@ mod pawn_moves {
     fn pawn_capture_ne() {
         let board = Board::new("8/8/8/pp5p/P6P/8/8/8 w - - 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 24, to: 33 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 24, to: 33 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -716,7 +855,7 @@ mod pawn_moves {
     fn pawn_move_n() {
         let board = Board::new("8/8/2p5/4p3/2P1P3/8/8/8 w - - 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 26, to: 34 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 26, to: 34 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -728,11 +867,11 @@ mod pawn_moves {
         let board = Board::new("8/8/6p1/2p1p3/p7/4P1P1/P1P5/8 w - - 0 1");
         let moves = board.possible_wp();
         let correct_moves: Vec<Move> = vec![
-            Normal{ from: 8, to: 16 },
-            Normal{ from: 10, to: 18 },
-            Normal{ from: 10, to: 26 },
-            Normal{ from: 20, to: 28 },
-            Normal{ from: 22, to: 30 },
+            Normal { from: 8, to: 16 },
+            Normal { from: 10, to: 18 },
+            Normal { from: 10, to: 26 },
+            Normal { from: 20, to: 28 },
+            Normal { from: 22, to: 30 },
         ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
@@ -741,14 +880,30 @@ mod pawn_moves {
     }
 
     #[test]
-    fn pawn_promotion_n(){
+    fn pawn_promotion_n() {
         let board = Board::new("8/3P4/8/8/8/8/8/8 w - - 0 1");
         let moves = board.possible_wp();
         let correct_moves: Vec<Move> = vec![
-            Promotion{ from: 51, to: 59, promotion: 'R' },
-            Promotion{ from: 51, to: 59, promotion: 'B' },
-            Promotion{ from: 51, to: 59, promotion: 'N' },
-            Promotion{ from: 51, to: 59, promotion: 'Q' },
+            Promotion {
+                from: 51,
+                to: 59,
+                promotion: 'R',
+            },
+            Promotion {
+                from: 51,
+                to: 59,
+                promotion: 'B',
+            },
+            Promotion {
+                from: 51,
+                to: 59,
+                promotion: 'N',
+            },
+            Promotion {
+                from: 51,
+                to: 59,
+                promotion: 'Q',
+            },
         ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
@@ -757,14 +912,30 @@ mod pawn_moves {
     }
 
     #[test]
-    fn pawn_promotion_captures_n(){
+    fn pawn_promotion_captures_n() {
         let board = Board::new("3pp3/3P4/8/8/8/8/8/8 w - - 0 1");
         let moves = board.possible_wp();
         let correct_moves: Vec<Move> = vec![
-            Promotion{ from: 51, to: 60, promotion: 'R' },
-            Promotion{ from: 51, to: 60, promotion: 'B' },
-            Promotion{ from: 51, to: 60, promotion: 'N' },
-            Promotion{ from: 51, to: 60, promotion: 'Q' },
+            Promotion {
+                from: 51,
+                to: 60,
+                promotion: 'R',
+            },
+            Promotion {
+                from: 51,
+                to: 60,
+                promotion: 'B',
+            },
+            Promotion {
+                from: 51,
+                to: 60,
+                promotion: 'N',
+            },
+            Promotion {
+                from: 51,
+                to: 60,
+                promotion: 'Q',
+            },
         ];
         println!("{:?}", moves);
         assert_eq!(moves.len(), correct_moves.len());
@@ -777,7 +948,14 @@ mod pawn_moves {
     fn en_passant_ne() {
         let board = Board::new("8/8/8/2pPp3/8/8/8/8 w - e6 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 35, to: 43 }, EnPassant{ from: 35, to: 44, captured: 36 }];
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 35, to: 43 },
+            EnPassant {
+                from: 35,
+                to: 44,
+                captured: 36,
+            },
+        ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -788,7 +966,14 @@ mod pawn_moves {
     fn en_passant_nw() {
         let board = Board::new("8/8/8/2pPp3/8/8/8/8 w - c6 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 35, to: 43 }, EnPassant{ from: 35, to: 42, captured: 34 }];
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 35, to: 43 },
+            EnPassant {
+                from: 35,
+                to: 42,
+                captured: 34,
+            },
+        ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -799,7 +984,7 @@ mod pawn_moves {
     fn en_passant_border_ne() {
         let board = Board::new("8/8/8/p6P/8/8/8/8 w - a6 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 39, to: 47 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 39, to: 47 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -810,7 +995,7 @@ mod pawn_moves {
     fn en_passant_border_nw() {
         let board = Board::new("8/8/8/P6p/8/8/8/8 w - h6 0 1");
         let moves = board.possible_wp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 32, to: 40 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 32, to: 40 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -821,7 +1006,7 @@ mod pawn_moves {
     fn pawn_capture_sw() {
         let board = Board::new("8/8/8/p6p/P5PP/8/8/8 w - - 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 39, to: 30 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 39, to: 30 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -832,7 +1017,7 @@ mod pawn_moves {
     fn pawn_capture_se() {
         let board = Board::new("8/8/8/p6p/PP5P/8/8/8 w - - 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 32, to: 25 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 32, to: 25 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -843,7 +1028,7 @@ mod pawn_moves {
     fn pawn_move_s() {
         let board = Board::new("8/8/8/2p1p3/4P3/2P5/8/8 w - - 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 34, to: 26 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 34, to: 26 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -855,11 +1040,11 @@ mod pawn_moves {
         let board = Board::new("8/p1p5/4p1p1/P7/2P1P3/6P1/8/8 w - - 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![
-            Normal{ from: 48, to: 40 },
-            Normal{ from: 50, to: 42 },
-            Normal{ from: 50, to: 34 },
-            Normal{ from: 44, to: 36 },
-            Normal{ from: 46, to: 38 },
+            Normal { from: 48, to: 40 },
+            Normal { from: 50, to: 42 },
+            Normal { from: 50, to: 34 },
+            Normal { from: 44, to: 36 },
+            Normal { from: 46, to: 38 },
         ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
@@ -868,14 +1053,30 @@ mod pawn_moves {
     }
 
     #[test]
-    fn pawn_promotion_s(){
+    fn pawn_promotion_s() {
         let board = Board::new("8/8/8/8/8/8/3p4/8 w - - 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![
-            Promotion{ from: 11, to: 3, promotion: 'r' },
-            Promotion{ from: 11, to: 3, promotion: 'b' },
-            Promotion{ from: 11, to: 3, promotion: 'n' },
-            Promotion{ from: 11, to: 3, promotion: 'q' },
+            Promotion {
+                from: 11,
+                to: 3,
+                promotion: 'r',
+            },
+            Promotion {
+                from: 11,
+                to: 3,
+                promotion: 'b',
+            },
+            Promotion {
+                from: 11,
+                to: 3,
+                promotion: 'n',
+            },
+            Promotion {
+                from: 11,
+                to: 3,
+                promotion: 'q',
+            },
         ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
@@ -884,14 +1085,30 @@ mod pawn_moves {
     }
 
     #[test]
-    fn pawn_promotion_captures_s(){
+    fn pawn_promotion_captures_s() {
         let board = Board::new("8/8/8/8/8/8/3p4/3PP3 w - - 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![
-            Promotion{ from: 11, to: 4, promotion: 'r' },
-            Promotion{ from: 11, to: 4, promotion: 'b' },
-            Promotion{ from: 11, to: 4, promotion: 'n' },
-            Promotion{ from: 11, to: 4, promotion: 'q' },
+            Promotion {
+                from: 11,
+                to: 4,
+                promotion: 'r',
+            },
+            Promotion {
+                from: 11,
+                to: 4,
+                promotion: 'b',
+            },
+            Promotion {
+                from: 11,
+                to: 4,
+                promotion: 'n',
+            },
+            Promotion {
+                from: 11,
+                to: 4,
+                promotion: 'q',
+            },
         ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
@@ -903,7 +1120,14 @@ mod pawn_moves {
     fn en_passant_se() {
         let board = Board::new("8/8/8/8/2PpP3/8/8/8 w - e3 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 27, to: 19 }, EnPassant{ from: 27, to: 20, captured: 28 }];
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 19 },
+            EnPassant {
+                from: 27,
+                to: 20,
+                captured: 28,
+            },
+        ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -914,7 +1138,14 @@ mod pawn_moves {
     fn en_passant_sw() {
         let board = Board::new("8/8/8/8/2PpP3/8/8/8 w - c3 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 27, to: 19 }, EnPassant{ from: 27, to: 18, captured: 26 }];
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 19 },
+            EnPassant {
+                from: 27,
+                to: 18,
+                captured: 26,
+            },
+        ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -925,7 +1156,7 @@ mod pawn_moves {
     fn en_passant_border_se() {
         let board = Board::new("8/8/8/8/P6p/8/8/8 w - h6 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 31, to: 23 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 31, to: 23 }];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
@@ -936,7 +1167,210 @@ mod pawn_moves {
     fn en_passant_border_sw() {
         let board = Board::new("8/8/8/8/p6P/8/8/8 w - a6 0 1");
         let moves = board.possible_bp();
-        let correct_moves: Vec<Move> = vec![Normal{ from: 24, to: 16 }];
+        let correct_moves: Vec<Move> = vec![Normal { from: 24, to: 16 }];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+}
+
+#[cfg(test)]
+
+mod rook_moves {
+
+    use crate::utils::{Board, Move};
+    use Move::*;
+
+    #[test]
+    fn w_rook_move_border() {
+        let board = Board::new("8/8/8/8/3R4/8/8/8 w - - 0 1");
+        let moves = board.possible_wr();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 30 },
+            Normal { from: 27, to: 31 },
+            Normal { from: 27, to: 3 },
+            Normal { from: 27, to: 11 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+            Normal { from: 27, to: 59 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_rook_move_block() {
+        let board = Board::new("8/3P4/8/8/P2R1P2/3P4/8/8 w - - 0 1");
+        let moves = board.possible_wr();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_rook_move_capture() {
+        let board = Board::new("8/3p4/8/8/p2R1p2/3p4/8/8 w - - 0 1");
+        let moves = board.possible_wr();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_rook_move_border() {
+        let board = Board::new("8/8/8/8/3r4/8/8/8 w - - 0 1");
+        let moves = board.possible_br();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 30 },
+            Normal { from: 27, to: 31 },
+            Normal { from: 27, to: 3 },
+            Normal { from: 27, to: 11 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+            Normal { from: 27, to: 59 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_rook_move_block() {
+        let board = Board::new("8/3p4/8/8/p2r1p2/3p4/8/8 w - - 0 1");
+        let moves = board.possible_br();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_rook_move_capture() {
+        let board = Board::new("8/3P4/8/8/P2r1P2/3P4/8/8 w - - 0 1");
+        let moves = board.possible_br();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+}
+
+mod bishop_moves {
+
+    use crate::utils::{Board, Move};
+    use Move::*;
+
+    #[test]
+    fn w_bishop_move_border() {
+        let board = Board::new("8/8/8/8/3B4/8/8/8 w - - 0 1");
+        let moves = board.possible_wb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 54 },
+            Normal { from: 27, to: 63 },
+            Normal { from: 27, to: 48 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 13 },
+            Normal { from: 27, to: 6 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_bishop_move_block() {
+        let board = Board::new("8/8/1P3P2/8/3B4/4P3/8/P7 w - - 0 1");
+        let moves = board.possible_wb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 34 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_bishop_move_capture() {
+        let board = Board::new("8/8/1p3p2/8/3B4/4p3/8/p7 w - - 0 1");
+        let moves = board.possible_wb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+        ];
         assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
