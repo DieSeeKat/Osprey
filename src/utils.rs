@@ -584,7 +584,7 @@ impl Board {
 
         for i in 0..64 {
             if self.white_bishops & (1u64 << i) != 0 {
-                let bishop_moves = self.possible_da(i) & !self.white_pieces;
+                let bishop_moves = self.possible_da(i) & !self.white_pieces & !self.white_king;
 
                 for j in 0..64 {
                     if bishop_moves & (1u64 << j) != 0 {
@@ -602,7 +602,7 @@ impl Board {
 
         for i in 0..64 {
             if self.white_rooks & (1u64 << i) != 0 {
-                let rook_moves = self.possible_hv(i) & !self.white_pieces;
+                let rook_moves = self.possible_hv(i) & !self.white_pieces & !self.white_king;
 
                 for j in 0..64 {
                     if rook_moves & (1u64 << j) != 0 {
@@ -616,7 +616,21 @@ impl Board {
     }
 
     pub fn possible_wq(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.white_queens & (1u64 << i) != 0 {
+                let queen_moves = (self.possible_hv(i) | self.possible_da(i)) & !self.white_pieces & !self.white_king;
+
+                for j in 0..64 {
+                    if queen_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_wk(&self) -> Vec<Move> {
@@ -757,7 +771,7 @@ impl Board {
 
         for i in 0..64 {
             if self.black_bishops & (1u64 << i) != 0 {
-                let bishop_moves = self.possible_da(i) & !self.black_pieces;
+                let bishop_moves = self.possible_da(i) & !self.black_pieces & !self.black_king;
 
                 for j in 0..64 {
                     if bishop_moves & (1u64 << j) != 0 {
@@ -775,7 +789,7 @@ impl Board {
 
         for i in 0..64 {
             if self.black_rooks & (1u64 << i) != 0 {
-                let rook_moves = self.possible_hv(i) & !self.black_pieces;
+                let rook_moves = self.possible_hv(i) & !self.black_pieces & !self.black_king;
 
                 for j in 0..64 {
                     if rook_moves & (1u64 << j) != 0 {
@@ -789,7 +803,21 @@ impl Board {
     }
 
     pub fn possible_bq(&self) -> Vec<Move> {
-        vec![]
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.black_queens & (1u64 << i) != 0 {
+                let queen_moves = (self.possible_hv(i) | self.possible_da(i)) & !self.black_pieces & !self.black_king;
+
+                for j in 0..64 {
+                    if queen_moves & (1u64 << j) != 0 {
+                        moves.push(Move::Normal { from: i, to: j });
+                    }
+                }
+            }
+        }
+
+        moves
     }
 
     pub fn possible_bk(&self) -> Vec<Move> {
@@ -1311,6 +1339,7 @@ mod rook_moves {
     }
 }
 
+#[cfg(test)]
 mod bishop_moves {
 
     use crate::utils::{Board, Move};
@@ -1362,6 +1391,251 @@ mod bishop_moves {
         let board = Board::new("8/8/1p3p2/8/3B4/4p3/8/p7 w - - 0 1");
         let moves = board.possible_wb();
         let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_bishop_move_border() {
+        let board = Board::new("8/8/8/8/3b4/8/8/8 w - - 0 1");
+        let moves = board.possible_bb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 54 },
+            Normal { from: 27, to: 63 },
+            Normal { from: 27, to: 48 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 13 },
+            Normal { from: 27, to: 6 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_bishop_move_block() {
+        let board = Board::new("8/8/1p3p2/8/3b4/4p3/8/p7 w - - 0 1");
+        let moves = board.possible_bb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 34 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_bishop_move_capture() {
+        let board = Board::new("8/8/1P3P2/8/3b4/4P3/8/P7 w - - 0 1");
+        let moves = board.possible_bb();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+}
+
+#[cfg(test)]
+mod queen_moves {
+    use crate::utils::{Board, Move};
+    use Move::*;
+
+    #[test]
+    fn w_queen_move_border() {
+        let board = Board::new("8/8/8/8/3Q4/8/8/8 w - - 0 1");
+        let moves = board.possible_wq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 54 },
+            Normal { from: 27, to: 63 },
+            Normal { from: 27, to: 48 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 13 },
+            Normal { from: 27, to: 6 },
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 30 },
+            Normal { from: 27, to: 31 },
+            Normal { from: 27, to: 3 },
+            Normal { from: 27, to: 11 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+            Normal { from: 27, to: 59 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_queen_move_block() {
+        let board = Board::new("8/3P4/1P3P2/8/P2Q1P2/3PP3/8/P7 w - - 0 1");
+        let moves = board.possible_wq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 34 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_queen_move_capture() {
+        let board = Board::new("8/3p4/1p3p2/8/p2Q1p2/3pp3/8/p7 w - - 0 1");
+        let moves = board.possible_wq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_queen_move_border() {
+        let board = Board::new("8/8/8/8/3q4/8/8/8 w - - 0 1");
+        let moves = board.possible_bq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 0 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 45 },
+            Normal { from: 27, to: 54 },
+            Normal { from: 27, to: 63 },
+            Normal { from: 27, to: 48 },
+            Normal { from: 27, to: 41 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 13 },
+            Normal { from: 27, to: 6 },
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 30 },
+            Normal { from: 27, to: 31 },
+            Normal { from: 27, to: 3 },
+            Normal { from: 27, to: 11 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
+            Normal { from: 27, to: 59 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_queen_move_block() {
+        let board = Board::new("8/3p4/1p3p2/8/p2q1p2/3pp3/8/p7 w - - 0 1");
+        let moves = board.possible_bq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 9 },
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 36 },
+            Normal { from: 27, to: 34 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+    
+    #[test]
+    fn b_queen_move_capture() {
+        let board = Board::new("8/3P4/1P3P2/8/P2q1P2/3PP3/8/P7 w - - 0 1");
+        let moves = board.possible_bq();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 24 },
+            Normal { from: 27, to: 25 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 29 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 43 },
+            Normal { from: 27, to: 51 },
             Normal { from: 27, to: 0 },
             Normal { from: 27, to: 9 },
             Normal { from: 27, to: 18 },

@@ -39,7 +39,7 @@ fn main() {
         None => panic!("No FEN string provided"),
     };
 
-    let mut start_board = Board::new(&fen);
+    let start_board = Board::new(&fen);
     println!("====FEN String===");
     println!("-----------------");
     println!("{}", start_board.export_fen());
