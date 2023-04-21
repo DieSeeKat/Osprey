@@ -668,7 +668,39 @@ impl Board {
     }
 
     pub fn possible_wk(&self) -> Vec<Move> {
-        vec![]
+        use Move::*;
+
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.white_king & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 9 {
+                    possibility = KING_SPAN << (i - 9);
+                } else {
+                    possibility = KING_SPAN >> (9 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H) & !self.white_pieces;
+                } else {
+                    possibility &= !(FILE_A | FILE_B) & !self.white_pieces;
+                }
+
+                possibility &= !self.white_pieces;
+
+                for j in 0..64 {
+                    if possibility & 1u64 << j != 0 {
+                        moves.push(Normal { from: i, to: j });
+                    }
+                }
+
+                break;
+            }
+        }
+
+        moves
     }
 
     pub fn possible_bp(&self) -> Vec<Move> {
@@ -885,7 +917,39 @@ impl Board {
     }
 
     pub fn possible_bk(&self) -> Vec<Move> {
-        vec![]
+        use Move::*;
+
+        let mut moves: Vec<Move> = Vec::new();
+
+        for i in 0..64 {
+            if self.black_king & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 9 {
+                    possibility = KING_SPAN << (i - 9);
+                } else {
+                    possibility = KING_SPAN >> (9 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H) & !self.black_pieces;
+                } else {
+                    possibility &= !(FILE_A | FILE_B) & !self.black_pieces;
+                }
+
+                possibility &= !self.black_pieces;
+
+                for j in 0..64 {
+                    if possibility & 1u64 << j != 0 {
+                        moves.push(Normal { from: i, to: j });
+                    }
+                }
+
+                break;
+            }
+        }
+
+        moves
     }
 }
 
@@ -1863,4 +1927,74 @@ mod knight_moves {
             assert!(correct_moves.contains(&m));
         }
     }
+}
+
+#[cfg(test)]
+mod king_move {
+
+    use crate::utils::{Board, Move};
+    use Move::*;
+
+    #[test]
+    fn w_king_move_capture() {
+        let board = Board::new("8/8/8/2p1p3/3K4/2p1p3/8/8 w - - 0 1");
+        let moves = board.possible_wk();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 36 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn w_king_block() {
+        let board = Board::new("8/8/8/2PPP3/2PKP3/2PPP3/8/8 w - - 0 1");
+        let moves = board.possible_wk();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_king_move_capture() {
+        let board = Board::new("8/8/8/2P1P3/3k4/2P1P3/8/8 w - - 0 1");
+        let moves = board.possible_bk();
+        let correct_moves: Vec<Move> = vec![
+            Normal { from: 27, to: 18 },
+            Normal { from: 27, to: 19 },
+            Normal { from: 27, to: 20 },
+            Normal { from: 27, to: 26 },
+            Normal { from: 27, to: 28 },
+            Normal { from: 27, to: 34 },
+            Normal { from: 27, to: 35 },
+            Normal { from: 27, to: 36 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn b_king_block() {
+        let board = Board::new("8/8/8/2ppp3/2pkp3/2ppp3/8/8 w - - 0 1");
+        let moves = board.possible_bk();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
 }
