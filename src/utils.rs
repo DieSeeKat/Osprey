@@ -67,6 +67,21 @@ const ANTI_DIAGONALS: [u64; 15] = [
     0x100000000000000,
 ];
 
+fn drawBitBoard(bitboard: u64) {
+    let mut bitboard = bitboard;
+    let output = String::new();
+    for i in 0..8 {
+        for j in 0..8 {
+            if bitboard & 1u64 << ((7 - i) * 8 + j) != 0 {
+                print!("x ");
+            } else {
+                print!(". ");
+            }
+        }
+        println!();
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Move {
     Normal { from: u8, to: u8 },
@@ -390,15 +405,15 @@ impl Board {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
 
-        let horizontal = (occupied.wrapping_sub(2 * slider))
+        let horizontal = (occupied.wrapping_sub(2u64.wrapping_mul(slider)))
             ^ (occupied
                 .reverse_bits()
-                .wrapping_sub(2 * slider.reverse_bits()))
+                .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits())))
             .reverse_bits();
-        let vertical = ((occupied & FILES[position as usize % 8]).wrapping_sub(2 * slider))
+        let vertical = ((occupied & FILES[position as usize % 8]).wrapping_sub(2u64.wrapping_mul(slider)))
             ^ ((occupied & FILES[position as usize % 8])
                 .reverse_bits()
-                .wrapping_sub(2 * slider.reverse_bits()))
+                .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits())))
             .reverse_bits();
 
         (horizontal & RANKS[(position / 8) as usize]) | (vertical & FILES[(position % 8) as usize])
@@ -598,8 +613,6 @@ impl Board {
                     possibility &= !(FILE_A | FILE_B) & !self.white_pieces & !self.white_king;
                 }
 
-                possibility &= !(self.white_pieces & self.white_king);
-
                 for j in 0..64 {
                     if possibility & 1u64 << j != 0 {
                         moves.push(Normal { from: i, to: j });
@@ -687,8 +700,6 @@ impl Board {
                 } else {
                     possibility &= !(FILE_A | FILE_B) & !self.white_pieces;
                 }
-
-                possibility &= !self.white_pieces;
 
                 for j in 0..64 {
                     if possibility & 1u64 << j != 0 {
@@ -937,8 +948,6 @@ impl Board {
                     possibility &= !(FILE_A | FILE_B) & !self.black_pieces;
                 }
 
-                possibility &= !self.black_pieces;
-
                 for j in 0..64 {
                     if possibility & 1u64 << j != 0 {
                         moves.push(Normal { from: i, to: j });
@@ -951,6 +960,158 @@ impl Board {
 
         moves
     }
+
+    pub fn unsafe_w(&self) -> u64 {
+        let mut unsafe_squares: u64 = 0;
+
+        // pawn
+        unsafe_squares |= (self.black_pawns >> 7) & !FILE_A;
+        unsafe_squares |= (self.black_pawns >> 9) & !FILE_H;
+
+        // knight
+
+        for i in 0..64 {
+            if self.black_knights & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 18 {
+                    possibility = KNIGHT_SPAN << (i - 18);
+                } else {
+                    possibility = KNIGHT_SPAN >> (18 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H) & !self.black_pieces & !self.black_king;
+                } else {
+                    possibility &= !(FILE_A | FILE_B) & !self.black_pieces & !self.black_king;
+                };
+
+                unsafe_squares |= possibility;
+            }
+        }
+
+        // bishop | queen
+
+        let bishop_queen = self.black_bishops | self.black_queens;
+
+        for i in 0..64 {
+            if bishop_queen & 1u64 << i != 0 {
+                unsafe_squares |= self.possible_da(i);
+            }
+        }
+
+
+        // rook | queen
+
+        let rook_queen = self.black_rooks | self.black_queens;
+
+        for i in 0..64 {
+            if rook_queen & 1u64 << i != 0 {
+                unsafe_squares |= self.possible_hv(i);
+            }
+        }
+
+        // king
+
+        for i in 0..64 {
+            if self.black_king & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 9 {
+                    possibility = KING_SPAN << (i - 9);
+                } else {
+                    possibility = KING_SPAN >> (9 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H);
+                } else {
+                    possibility &= !(FILE_A | FILE_B);
+                }
+
+                unsafe_squares |= possibility;
+            }
+        }
+
+        unsafe_squares
+    }
+
+    pub fn unsafe_b(&self) -> u64 {
+        let mut unsafe_squares: u64 = 0;
+
+        // pawn
+        unsafe_squares |= (self.white_pawns << 7) & !FILE_H;
+        unsafe_squares |= (self.white_pawns << 9) & !FILE_A;
+
+        // knight
+
+        for i in 0..64 {
+            if self.white_knights & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 18 {
+                    possibility = KNIGHT_SPAN << (i - 18);
+                } else {
+                    possibility = KNIGHT_SPAN >> (18 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H) & !self.white_pieces & !self.white_king;
+                } else {
+                    possibility &= !(FILE_A | FILE_B) & !self.white_pieces & !self.white_king;
+                };
+
+                unsafe_squares |= possibility;
+            }
+        }
+
+        // bishop | queen
+
+        let bishop_queen = self.white_bishops | self.white_queens;
+
+        for i in 0..64 {
+            if bishop_queen & 1u64 << i != 0 {
+                unsafe_squares |= self.possible_da(i);
+            }
+        }
+
+        // rook | queen
+
+        let rook_queen = self.white_rooks | self.white_queens;
+
+        for i in 0..64 {
+            if rook_queen & 1u64 << i != 0 {
+                unsafe_squares |= self.possible_hv(i);
+            }
+        }
+
+        // king
+
+        for i in 0..64 {
+            if self.white_king & 1u64 << i != 0 {
+                let mut possibility: u64;
+
+                if i > 9 {
+                    possibility = KING_SPAN << (i - 9);
+                } else {
+                    possibility = KING_SPAN >> (9 - i);
+                }
+
+                if i % 8 < 4 {
+                    possibility &= !(FILE_G | FILE_H);
+                } else {
+                    possibility &= !(FILE_A | FILE_B);
+                }
+
+                unsafe_squares |= possibility;
+            }
+        }
+
+        println!("unsafe squares: {}", unsafe_squares);
+        drawBitBoard(unsafe_squares);
+
+        unsafe_squares
+    }    
 }
 
 impl fmt::Display for Board {
@@ -1996,5 +2157,4 @@ mod king_move {
             assert!(correct_moves.contains(&m));
         }
     }
-
 }
