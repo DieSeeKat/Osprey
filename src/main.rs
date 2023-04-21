@@ -1,7 +1,7 @@
-use crate::utils::Board;
+use crate::board::Board;
 use clap::Parser;
 
-mod utils;
+mod board;
 
 #[derive(Parser)]
 struct App {
