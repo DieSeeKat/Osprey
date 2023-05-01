@@ -1,4 +1,4 @@
-pub fn drawBitBoard(bitboard: u64) {
+pub fn draw_bit_board(bitboard: u64) {
     let mut bitboard = bitboard;
     let output = String::new();
     for i in 0..8 {

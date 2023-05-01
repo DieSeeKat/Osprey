@@ -93,7 +93,7 @@ pub struct Board {
     /* All squares that white can capture (black but not king) */
     black_pieces: u64,
     /* All empty squares */
-    empty_squares: u64,
+    pub empty_squares: u64,
     en_passant: u8,
     white_turn: bool,
     white_castle_kingside: bool,
@@ -233,7 +233,7 @@ impl Board {
             white_pawns | white_knights | white_bishops | white_rooks | white_queens;
         let black_pieces: u64 =
             black_pawns | black_knights | black_bishops | black_rooks | black_queens;
-        let empty_squares: u64 = !(white_pieces | black_pieces);
+        let empty_squares: u64 = !(white_pieces | black_pieces | white_king | black_king);
 
         Board {
             white_pawns,

@@ -1017,3 +1017,24 @@ mod king_move {
         }
     }
 }
+
+#[cfg(test)]
+mod unsafe_squares {
+    use crate::osprey::Board;
+
+    #[test]
+    fn w_unsafe_squares() {
+        let board = Board::new("8/4r3/3n2b1/3p2n1/4K3/8/6q1/8 w - - 0 1");
+        let unsafe_squares: u64 = board.unsafe_w();
+        let correct_unsafe_squares: u64 = 1508443033184550880;
+        assert_eq!(unsafe_squares, correct_unsafe_squares);
+    }
+
+    #[test]
+    fn b_unsafe_squares() {
+        let board = Board::new("8/4R3/3N2B1/6N1/4k3/3P4/6Q1/8 w - - 0 1");
+        let unsafe_squares: u64 = board.unsafe_b();
+        let correct_unsafe_squares: u64 = 1508443033184550880;
+        assert_eq!(unsafe_squares, correct_unsafe_squares);
+    }
+}
