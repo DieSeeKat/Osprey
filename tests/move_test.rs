@@ -1038,3 +1038,4 @@ mod unsafe_squares {
         assert_eq!(unsafe_squares, correct_unsafe_squares);
     }
 }
+
