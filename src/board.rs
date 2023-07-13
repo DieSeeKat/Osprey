@@ -16,12 +16,15 @@ const RANK_5: u64 = 1095216660480;
 const RANK_6: u64 = 280375465082880;
 const RANK_7: u64 = 71776119061217280;
 const RANK_8: u64 = 18374686479671623680;
-const CENTER: u64 = 103481868288;
-const EXTENDED_CENTER: u64 = 66229406269440;
-const KING_SIDE: u64 = 9295429630892703744;
-const QUEEN_SIDE: u64 = 4755801206503243840;
-const WHITE_SQUARES: u64 = 2863311530;
-const BLACK_SQUARES: u64 = 1431655765;
+
+// Left here for later use
+// const CENTER: u64 = 103481868288;
+// const EXTENDED_CENTER: u64 = 66229406269440;
+// const KING_SIDE: u64 = 9295429630892703744;
+// const QUEEN_SIDE: u64 = 4755801206503243840;
+// const WHITE_SQUARES: u64 = 2863311530;
+// const BLACK_SQUARES: u64 = 1431655765;
+
 const KNIGHT_SPAN: u64 = 43234889994;
 const KING_SPAN: u64 = 460039;
 
@@ -68,6 +71,7 @@ const ANTI_DIAGONALS: [u64; 15] = [
 ];
 
 /// A move of a piece on the board.
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub enum Move {
     ///
@@ -121,6 +125,7 @@ pub enum Move {
 /// The least significant bit represents the square a1 and the most significant bit represents the square h8.
 /// The bits are ordered first from left to right and next from top to bottom.
 ///
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
     /// A bitboard representing the white pawns.
@@ -171,6 +176,7 @@ pub struct Board {
     pub fullmove: u8,
 }
 
+#[allow(dead_code)]
 impl Board {
     ///
     /// Creates a new board from a FEN string.
@@ -535,12 +541,12 @@ impl Board {
         // get from and to
         let (from, to) = match m {
             Move::Normal { from, to } => (*from, *to),
-            Move::Castle { from, to, rook } => (*from, *to),
-            Move::EnPassant { from, to, captured } => (*from, *to),
+            Move::Castle { from, to, .. } => (*from, *to),
+            Move::EnPassant { from, to, .. } => (*from, *to),
             Move::Promotion {
                 from,
                 to,
-                promotion,
+                ..
             } => (*from, *to),
         };
 
@@ -983,7 +989,6 @@ impl Board {
     ///
     /// A vector of all pseudo-legal knight moves white can make.
     fn possible_wn(&self) -> Vec<Move> {
-        use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1390,7 +1395,6 @@ impl Board {
     /// A vector of all pseudo-legal king moves black can make.
     ///
     fn possible_bk(&self) -> Vec<Move> {
-        use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
