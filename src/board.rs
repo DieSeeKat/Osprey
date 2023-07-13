@@ -70,6 +70,26 @@ const ANTI_DIAGONALS: [u64; 15] = [
     0x100000000000000,
 ];
 
+///
+/// The type of a piece.
+/// 
+#[allow(dead_code)]
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub enum Piece {
+    WhitePawn,
+    WhiteKnight,
+    WhiteBishop,
+    WhiteRook,
+    WhiteQueen,
+    WhiteKing,
+    BlackPawn,
+    BlackKnight,
+    BlackBishop,
+    BlackRook,
+    BlackQueen,
+    BlackKing,
+}
+
 /// A move of a piece on the board.
 #[allow(dead_code)]
 #[derive(Debug, PartialEq)]
@@ -112,7 +132,7 @@ pub enum Move {
     /// * `to` - The position to move the pawn to as a number between 0 and 63 (both included).
     /// * `promotion` - The piece to promote to as a character (b n r q B N R Q).
     ///
-    Promotion { from: u8, to: u8, promotion: char },
+    Promotion { from: u8, to: u8, promotion: Piece },
 }
 
 ///
@@ -524,19 +544,19 @@ impl Board {
         let new_fullmove = self.fullmove + 1;
 
         // set new boards
-        let new_white_pawns = self.move_board(m, 'P');
-        let new_white_knights = self.move_board(m, 'N');
-        let new_white_bishops = self.move_board(m, 'B');
-        let new_white_rooks = self.move_board(m, 'R');
-        let new_white_queens = self.move_board(m, 'Q');
-        let new_white_king = self.move_board(m, 'K');
+        let new_white_pawns = self.move_board(m, Piece::WhitePawn);
+        let new_white_knights = self.move_board(m, Piece::WhiteKnight);
+        let new_white_bishops = self.move_board(m, Piece::WhiteBishop);
+        let new_white_rooks = self.move_board(m, Piece::WhiteRook);
+        let new_white_queens = self.move_board(m, Piece::WhiteQueen);
+        let new_white_king = self.move_board(m, Piece::WhiteKing);
 
-        let new_black_pawns = self.move_board(m, 'p');
-        let new_black_knights = self.move_board(m, 'n');
-        let new_black_bishops = self.move_board(m, 'b');
-        let new_black_rooks = self.move_board(m, 'r');
-        let new_black_queens = self.move_board(m, 'q');
-        let new_black_king = self.move_board(m, 'k');
+        let new_black_pawns = self.move_board(m, Piece::BlackPawn);
+        let new_black_knights = self.move_board(m, Piece::BlackKnight);
+        let new_black_bishops = self.move_board(m, Piece::BlackBishop);
+        let new_black_rooks = self.move_board(m, Piece::BlackRook);
+        let new_black_queens = self.move_board(m, Piece::BlackQueen);
+        let new_black_king = self.move_board(m, Piece::BlackKing);
 
         // get from and to
         let (from, to) = match m {
@@ -648,24 +668,22 @@ impl Board {
     ///
     /// The modified board.
     ///
-    pub fn move_board(&self, m: &Move, board_type: char) -> u64 {
+    fn move_board(&self, m: &Move, board_type: Piece) -> u64 {
         // get respective bitboard
         let board = match board_type {
-            'P' => self.white_pawns,
-            'N' => self.white_knights,
-            'B' => self.white_bishops,
-            'R' => self.white_rooks,
-            'Q' => self.white_queens,
-            'K' => self.white_king,
+            Piece::WhitePawn => self.white_pawns,
+            Piece::WhiteKnight => self.white_knights,
+            Piece::WhiteBishop => self.white_bishops,
+            Piece::WhiteRook => self.white_rooks,
+            Piece::WhiteQueen => self.white_queens,
+            Piece::WhiteKing => self.white_king,
 
-            'p' => self.black_pawns,
-            'n' => self.black_knights,
-            'b' => self.black_bishops,
-            'r' => self.black_rooks,
-            'q' => self.black_queens,
-            'k' => self.black_king,
-
-            _ => panic!("Invalid board type"),
+            Piece::BlackPawn => self.black_pawns,
+            Piece::BlackKnight => self.black_knights,
+            Piece::BlackBishop => self.black_bishops,
+            Piece::BlackRook => self.black_rooks,
+            Piece::BlackQueen => self.black_queens,
+            Piece::BlackKing => self.black_king,
         };
 
         // make move
@@ -909,7 +927,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['Q', 'R', 'B', 'N'].iter() {
+                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i - 8,
                         to: i,
@@ -925,7 +943,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['Q', 'R', 'B', 'N'].iter() {
+                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i - 9,
                         to: i,
@@ -941,7 +959,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['Q', 'R', 'B', 'N'].iter() {
+                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i - 7,
                         to: i,
@@ -953,7 +971,7 @@ impl Board {
 
         match self.en_passant {
             Some(en_passant) => {
-                
+
                 // Pawn NE en passant
 
                 pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << en_passant);
@@ -1200,7 +1218,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['q', 'r', 'b', 'n'].iter() {
+                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i + 8,
                         to: i,
@@ -1216,7 +1234,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['q', 'r', 'b', 'n'].iter() {
+                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i + 9,
                         to: i,
@@ -1232,7 +1250,7 @@ impl Board {
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
-                for promotion in ['q', 'r', 'b', 'n'].iter() {
+                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
                     moves.push(Move::Promotion {
                         from: i + 7,
                         to: i,
@@ -1743,7 +1761,7 @@ fn make_pawn_move_n() {
     let board = Board::new("8/8/8/8/8/4P3/8/8 w - - 0 1");
 
     let m = Move::Normal { from: 20, to: 28 };
-    let new_white_pawns = board.move_board(&m, 'P');
+    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
 
     assert_eq!(new_white_pawns, 1u64 << 28);
 }
@@ -1754,8 +1772,8 @@ fn make_rook_capture() {
 
     let m = Move::Normal { from: 12, to: 52 };
 
-    let new_white_rooks = board.move_board(&m, 'R');
-    let new_black_rooks = board.move_board(&m, 'r');
+    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
+    let new_black_rooks = board.move_board(&m, Piece::BlackRook);
 
     assert_eq!(new_white_rooks, 1u64 << 52);
     assert_eq!(new_black_rooks, 0u64);
@@ -1768,12 +1786,12 @@ fn make_pawn_promotion() {
     let m = Move::Promotion {
         from: 51,
         to: 60,
-        promotion: 'Q',
+        promotion: Piece::WhiteQueen,
     };
 
-    let new_white_queens = board.move_board(&m, 'Q');
-    let new_white_pawns = board.move_board(&m, 'P');
-    let new_black_pawns = board.move_board(&m, 'p');
+    let new_white_queens = board.move_board(&m, Piece::WhiteQueen);
+    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
+    let new_black_pawns = board.move_board(&m, Piece::BlackPawn);
 
     assert_eq!(new_white_queens, 1u64 << 60);
     assert_eq!(new_white_pawns, 0u64);
@@ -1790,8 +1808,8 @@ fn make_en_passant() {
         captured: 36,
     };
 
-    let new_white_pawns = board.move_board(&m, 'P');
-    let new_black_pawns = board.move_board(&m, 'p');
+    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
+    let new_black_pawns = board.move_board(&m, Piece::BlackPawn);
 
     assert_eq!(new_white_pawns, 1u64 << 44);
     assert_eq!(new_black_pawns, 1u64 << 34);
@@ -1807,8 +1825,8 @@ fn make_castle_w_k() {
         rook: 7,
     };
 
-    let new_white_kings = board.move_board(&m, 'K');
-    let new_white_rooks = board.move_board(&m, 'R');
+    let new_white_kings = board.move_board(&m, Piece::WhiteKing);
+    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
 
     assert_eq!(new_white_kings, 1u64 << 6);
     assert_eq!(new_white_rooks, 1u64 << 5);
@@ -1824,8 +1842,8 @@ fn make_castle_w_q() {
         rook: 0,
     };
 
-    let new_white_kings = board.move_board(&m, 'K');
-    let new_white_rooks = board.move_board(&m, 'R');
+    let new_white_kings = board.move_board(&m, Piece::WhiteKing);
+    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
 
     assert_eq!(new_white_kings, 1u64 << 2);
     assert_eq!(new_white_rooks, 1u64 << 3);
@@ -1889,22 +1907,22 @@ fn pawn_promotion_n() {
         Move::Promotion {
             from: 51,
             to: 59,
-            promotion: 'R',
+            promotion: Piece::WhiteRook,
         },
         Move::Promotion {
             from: 51,
             to: 59,
-            promotion: 'B',
+            promotion: Piece::WhiteBishop,
         },
         Move::Promotion {
             from: 51,
             to: 59,
-            promotion: 'N',
+            promotion: Piece::WhiteKnight,
         },
         Move::Promotion {
             from: 51,
             to: 59,
-            promotion: 'Q',
+            promotion: Piece::WhiteQueen,
         },
     ];
     assert_eq!(moves.len(), correct_moves.len());
@@ -1921,22 +1939,22 @@ fn pawn_promotion_captures_n() {
         Move::Promotion {
             from: 51,
             to: 60,
-            promotion: 'R',
+            promotion: Piece::WhiteRook,
         },
         Move::Promotion {
             from: 51,
             to: 60,
-            promotion: 'B',
+            promotion: Piece::WhiteBishop,
         },
         Move::Promotion {
             from: 51,
             to: 60,
-            promotion: 'N',
+            promotion: Piece::WhiteKnight,
         },
         Move::Promotion {
             from: 51,
             to: 60,
-            promotion: 'Q',
+            promotion: Piece::WhiteQueen,
         },
     ];
     println!("{:?}", moves);
@@ -2062,22 +2080,22 @@ fn pawn_promotion_s() {
         Move::Promotion {
             from: 11,
             to: 3,
-            promotion: 'r',
+            promotion: Piece::BlackRook,
         },
         Move::Promotion {
             from: 11,
             to: 3,
-            promotion: 'b',
+            promotion: Piece::BlackBishop,
         },
         Move::Promotion {
             from: 11,
             to: 3,
-            promotion: 'n',
+            promotion: Piece::BlackKnight,
         },
         Move::Promotion {
             from: 11,
             to: 3,
-            promotion: 'q',
+            promotion: Piece::BlackQueen,
         },
     ];
     assert_eq!(moves.len(), correct_moves.len());
@@ -2094,22 +2112,22 @@ fn pawn_promotion_captures_s() {
         Move::Promotion {
             from: 11,
             to: 4,
-            promotion: 'r',
+            promotion: Piece::BlackRook,
         },
         Move::Promotion {
             from: 11,
             to: 4,
-            promotion: 'b',
+            promotion: Piece::BlackBishop,
         },
         Move::Promotion {
             from: 11,
             to: 4,
-            promotion: 'n',
+            promotion: Piece::BlackKnight,
         },
         Move::Promotion {
             from: 11,
             to: 4,
-            promotion: 'q',
+            promotion: Piece::BlackQueen,
         },
     ];
     assert_eq!(moves.len(), correct_moves.len());
