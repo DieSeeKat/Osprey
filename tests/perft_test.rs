@@ -2,10 +2,7 @@ extern crate osprey;
 
 #[cfg(test)]
 mod perft_tests {
-    use crate::osprey::{Board, Move};
-    use osprey::draw_bit_board;
-    use Move::*;
-    static mut COUNT: u64 = 0;
+    use crate::osprey::Board;
 
     fn perft(board: &osprey::Board, depth: u8, max_depth: u8) -> u64 {
         if depth == max_depth {
@@ -23,12 +20,6 @@ mod perft_tests {
         for m in moves {
             match board.make_move(&m) {
                 Ok(new_board) => {
-                    match m {
-                        Castle { from, to, rook } => unsafe {
-                            COUNT += 1;
-                        },
-                        _ => {}
-                    }
                     let num_nodes = perft(&new_board, depth + 1, max_depth);
                     nodes += num_nodes;
                 }
