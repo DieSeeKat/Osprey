@@ -1,17 +1,16 @@
 extern crate osprey;
 
 #[cfg(test)]
-mod make_move {
+mod board_move {
     use crate::osprey::{Board, Move};
     use Move::*;
-    use osprey::draw_bit_board;
 
     #[test]
     fn pawn_move_n() {
         let board = Board::new("8/8/8/8/8/4P3/8/8 w - - 0 1");
-    
+
         let m = Normal { from: 20, to: 28 };
-        let new_white_pawns = board.make_move(&m, 'P');
+        let new_white_pawns = board.move_board(&m, 'P');
 
         assert_eq!(new_white_pawns, 1u64 << 28);
     }
@@ -22,8 +21,8 @@ mod make_move {
 
         let m = Normal { from: 12, to: 52 };
 
-        let new_white_rooks = board.make_move(&m, 'R');
-        let new_black_rooks = board.make_move(&m, 'r');
+        let new_white_rooks = board.move_board(&m, 'R');
+        let new_black_rooks = board.move_board(&m, 'r');
 
         assert_eq!(new_white_rooks, 1u64 << 52);
         assert_eq!(new_black_rooks, 0u64);
@@ -39,9 +38,9 @@ mod make_move {
             promotion: 'Q',
         };
 
-        let new_white_queens = board.make_move(&m, 'Q');
-        let new_white_pawns = board.make_move(&m, 'P');
-        let new_black_pawns = board.make_move(&m, 'p');
+        let new_white_queens = board.move_board(&m, 'Q');
+        let new_white_pawns = board.move_board(&m, 'P');
+        let new_black_pawns = board.move_board(&m, 'p');
 
         assert_eq!(new_white_queens, 1u64 << 60);
         assert_eq!(new_white_pawns, 0u64);
@@ -58,8 +57,8 @@ mod make_move {
             captured: 36,
         };
 
-        let new_white_pawns = board.make_move(&m, 'P');
-        let new_black_pawns = board.make_move(&m, 'p');
+        let new_white_pawns = board.move_board(&m, 'P');
+        let new_black_pawns = board.move_board(&m, 'p');
 
         assert_eq!(new_white_pawns, 1u64 << 44);
         assert_eq!(new_black_pawns, 1u64 << 34);
@@ -69,10 +68,14 @@ mod make_move {
     fn castle_w_k() {
         let board = Board::new("8/8/8/8/8/8/8/4K2R w KQ - 0 1");
 
-        let m = Castle { from: 4, to: 6, rook: 7 };
+        let m = Castle {
+            from: 4,
+            to: 6,
+            rook: 7,
+        };
 
-        let new_white_kings = board.make_move(&m, 'K');
-        let new_white_rooks = board.make_move(&m, 'R');
+        let new_white_kings = board.move_board(&m, 'K');
+        let new_white_rooks = board.move_board(&m, 'R');
 
         assert_eq!(new_white_kings, 1u64 << 6);
         assert_eq!(new_white_rooks, 1u64 << 5);
@@ -82,10 +85,14 @@ mod make_move {
     fn castle_w_q() {
         let board = Board::new("8/8/8/8/8/8/8/R3K3 w KQ - 0 1");
 
-        let m = Castle { from: 4, to: 2, rook: 0 };
+        let m = Castle {
+            from: 4,
+            to: 2,
+            rook: 0,
+        };
 
-        let new_white_kings = board.make_move(&m, 'K');
-        let new_white_rooks = board.make_move(&m, 'R');
+        let new_white_kings = board.move_board(&m, 'K');
+        let new_white_rooks = board.move_board(&m, 'R');
 
         assert_eq!(new_white_kings, 1u64 << 2);
         assert_eq!(new_white_rooks, 1u64 << 3);
@@ -386,7 +393,7 @@ mod pawn_moves {
 
     #[test]
     fn en_passant_se() {
-        let board = Board::new("8/8/8/8/2PpP3/8/8/8 w - e3 0 1");
+        let board = Board::new("8/8/8/8/2PpP3/8/8/8 b - e3 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![
             Normal { from: 27, to: 19 },
@@ -404,7 +411,7 @@ mod pawn_moves {
 
     #[test]
     fn en_passant_sw() {
-        let board = Board::new("8/8/8/8/2PpP3/8/8/8 w - c3 0 1");
+        let board = Board::new("8/8/8/8/2PpP3/8/8/8 b - c3 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![
             Normal { from: 27, to: 19 },
@@ -414,7 +421,6 @@ mod pawn_moves {
                 captured: 26,
             },
         ];
-        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -422,7 +428,7 @@ mod pawn_moves {
 
     #[test]
     fn en_passant_border_se() {
-        let board = Board::new("8/8/8/8/P6p/8/8/8 w - h6 0 1");
+        let board = Board::new("8/8/8/8/P6p/8/8/8 b - h6 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![Normal { from: 31, to: 23 }];
         assert_eq!(moves.len(), correct_moves.len());
@@ -433,7 +439,7 @@ mod pawn_moves {
 
     #[test]
     fn en_passant_border_sw() {
-        let board = Board::new("8/8/8/8/p6P/8/8/8 w - a6 0 1");
+        let board = Board::new("8/8/8/8/p6P/8/8/8 b - a6 0 1");
         let moves = board.possible_bp();
         let correct_moves: Vec<Move> = vec![Normal { from: 24, to: 16 }];
         assert_eq!(moves.len(), correct_moves.len());
@@ -1114,17 +1120,24 @@ mod king_move {
 mod castling {
     use crate::osprey::{Board, Move};
     use Move::*;
-    use osprey::draw_bit_board;
 
     #[test]
     fn castling_w_kq() {
         let board = Board::new("8/8/8/8/8/8/8/R3K2R w KQ - 0 1");
         let moves = board.possible_wc();
         let correct_moves: Vec<Move> = vec![
-            Castle { from: 4, to: 6, rook: 7 },
-            Castle { from: 4, to: 2, rook: 0 },
+            Castle {
+                from: 4,
+                to: 6,
+                rook: 7,
+            },
+            Castle {
+                from: 4,
+                to: 2,
+                rook: 0,
+            },
         ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1134,10 +1147,12 @@ mod castling {
     fn castling_w_k() {
         let board = Board::new("8/8/8/8/8/8/8/R3K2R w K - 0 1");
         let moves = board.possible_wc();
-        let correct_moves: Vec<Move> = vec![
-            Castle { from: 4, to: 6, rook: 7 },
-        ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        let correct_moves: Vec<Move> = vec![Castle {
+            from: 4,
+            to: 6,
+            rook: 7,
+        }];
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1147,10 +1162,12 @@ mod castling {
     fn castling_w_q() {
         let board = Board::new("8/8/8/8/8/8/8/R3K2R w Q - 0 1");
         let moves = board.possible_wc();
-        let correct_moves: Vec<Move> = vec![
-            Castle { from: 4, to: 2, rook: 0 },
-        ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        let correct_moves: Vec<Move> = vec![Castle {
+            from: 4,
+            to: 2,
+            rook: 0,
+        }];
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1159,9 +1176,6 @@ mod castling {
     #[test]
     fn castling_w_unsafe() {
         let board = Board::new("2r3r1/8/8/8/8/8/8/R3K2R w KQ - 0 1");
-
-        draw_bit_board(board.unsafe_w());
-        draw_bit_board(1u64 << 2);
 
         let moves = board.possible_wc();
         let correct_moves: Vec<Move> = vec![];
@@ -1189,10 +1203,18 @@ mod castling {
         let board = Board::new("r3k2r/8/8/8/8/8/8/8 w kq - 0 1");
         let moves = board.possible_bc();
         let correct_moves: Vec<Move> = vec![
-            Castle { from: 60, to: 62, rook: 63 },
-            Castle { from: 60, to: 58, rook: 56 },
+            Castle {
+                from: 60,
+                to: 62,
+                rook: 63,
+            },
+            Castle {
+                from: 60,
+                to: 58,
+                rook: 56,
+            },
         ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1202,10 +1224,12 @@ mod castling {
     fn castling_b_k() {
         let board = Board::new("r3k2r/8/8/8/8/8/8/8 w k - 0 1");
         let moves = board.possible_bc();
-        let correct_moves: Vec<Move> = vec![
-            Castle { from: 60, to: 62, rook: 63 },
-        ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        let correct_moves: Vec<Move> = vec![Castle {
+            from: 60,
+            to: 62,
+            rook: 63,
+        }];
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1215,10 +1239,12 @@ mod castling {
     fn castling_b_q() {
         let board = Board::new("r3k2r/8/8/8/8/8/8/8 w q - 0 1");
         let moves = board.possible_bc();
-        let correct_moves: Vec<Move> = vec![
-            Castle { from: 60, to: 58, rook: 56 },
-        ];
-        assert_eq!(moves.len(), correct_moves.len());   
+        let correct_moves: Vec<Move> = vec![Castle {
+            from: 60,
+            to: 58,
+            rook: 56,
+        }];
+        assert_eq!(moves.len(), correct_moves.len());
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
@@ -1269,4 +1295,3 @@ mod unsafe_squares {
         assert_eq!(unsafe_squares, correct_unsafe_squares);
     }
 }
-

@@ -2,7 +2,8 @@ extern crate osprey;
 
 #[cfg(test)]
 mod perft_tests {
-    use crate::osprey::Board;
+    use crate::osprey::{Board, Move};
+    use Move::*;
 
     #[test]
     fn starting_position_w() {

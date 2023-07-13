@@ -74,7 +74,7 @@ pub enum Move {
     EnPassant { from: u8, to: u8, captured: u8 },
     Promotion { from: u8, to: u8, promotion: char },
 }
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Board {
     pub white_pawns: u64,
     pub white_knights: u64,
@@ -384,8 +384,118 @@ impl Board {
 
         return None;
     }
+    
+    pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
 
-    pub fn make_move(&self, m: &Move, board_type: char) -> u64 {
+        let mut new_en_passant = 0;
+        let new_white_turn = !self.white_turn;
+        let mut new_white_castle_kingside = self.white_castle_kingside;
+        let mut new_white_castle_queenside = self.white_castle_queenside;
+        let mut new_black_castle_kingside = self.black_castle_kingside;
+        let mut new_black_castle_queenside = self.black_castle_queenside;
+        let new_halfmove = self.halfmove + 1;
+        let new_fullmove = self.fullmove + 1;
+        
+        let new_white_pawns = self.move_board(m, 'P');
+        let new_white_knights = self.move_board(m, 'N');
+        let new_white_bishops = self.move_board(m, 'B');
+        let new_white_rooks = self.move_board(m, 'R');
+        let new_white_queens = self.move_board(m, 'Q');
+        let new_white_king = self.move_board(m, 'K');
+        
+        let new_black_pawns = self.move_board(m, 'p');
+        let new_black_knights = self.move_board(m, 'n');
+        let new_black_bishops = self.move_board(m, 'b');
+        let new_black_rooks = self.move_board(m, 'r');
+        let new_black_queens = self.move_board(m, 'q');
+        let new_black_king = self.move_board(m, 'k');
+
+        let (from, to) = match m {
+            Move::Normal { from, to } => (*from, *to),
+            Move::Castle { from, to, rook } => (*from, *to),
+            Move::EnPassant { from, to, captured } => (*from, *to),
+            Move::Promotion {
+                from,
+                to,
+                promotion,
+            } => (*from, *to),
+        };
+
+        // en passant
+        if to.abs_diff(from) == 16 {
+            if (1u64 << from & self.black_pawns) != 0 {
+                new_en_passant = to + 8;
+            } else if (1u64 << from & self.white_pawns) != 0 {
+                new_en_passant = to - 8;
+            }
+        }
+    
+        // castling
+        if (1u64 << from & self.white_king) != 0 {
+            new_white_castle_kingside = false;
+            new_white_castle_queenside = false;
+        } else if (1u64 << from & self.white_rooks & (1u64 << 0)) != 0 {
+            new_white_castle_queenside = false;
+        } else if (1u64 << from & self.white_rooks & (1u64 << 7)) != 0 {
+            new_white_castle_kingside = false;
+        } else if (1u64 << from & self.black_king) != 0 {
+            new_black_castle_kingside = false;
+            new_black_castle_queenside = false;
+        } else if (1u64 << from & self.black_rooks & (1u64 << 56)) != 0 {
+            new_black_castle_queenside = false;
+        } else if (1u64 << from & self.black_rooks & (1u64 << 63)) != 0 {
+            new_black_castle_kingside = false;
+        }
+
+        let new_white_pieces = new_white_pawns
+            | new_white_knights
+            | new_white_bishops
+            | new_white_rooks
+            | new_white_queens;
+
+        let new_black_pieces = new_black_pawns
+            | new_black_knights
+            | new_black_bishops
+            | new_black_rooks
+            | new_black_queens;
+
+        let new_empty_squares = !(new_white_pieces | new_black_pieces | new_white_king | new_black_king);
+
+        let new_board = Board { 
+            white_pawns: new_white_pawns, 
+            black_pawns: new_black_pawns,
+            white_knights: new_white_knights,
+            black_knights: new_black_knights,
+            white_bishops: new_white_bishops,
+            black_bishops: new_black_bishops,
+            white_rooks: new_white_rooks,
+            black_rooks: new_black_rooks,
+            white_queens: new_white_queens,
+            black_queens: new_black_queens,
+            white_king: new_white_king,
+            black_king: new_black_king,
+            white_pieces: new_white_pieces,
+            black_pieces: new_black_pieces,
+            empty_squares: new_empty_squares,
+            en_passant: new_en_passant,
+            white_turn: new_white_turn,
+            white_castle_kingside: new_white_castle_kingside,
+            white_castle_queenside: new_white_castle_queenside,
+            black_castle_kingside: new_black_castle_kingside,
+            black_castle_queenside: new_black_castle_queenside,
+            halfmove: new_halfmove,
+            fullmove: new_fullmove,
+        };
+
+        if (new_board.white_king & new_board.unsafe_w() == 0 && self.white_turn) || (new_board.black_king & new_board.unsafe_b() == 0 && !self.white_turn) {
+            return Ok(new_board);
+        } else {
+            return Err(self.clone());
+        } 
+
+    }
+
+    pub fn move_board(&self, m: &Move, board_type: char) -> u64 {
         let mut board = match board_type {
             'P' => self.white_pawns,
             'N' => self.white_knights,
@@ -411,24 +521,20 @@ impl Board {
                 } else {
                     return (board & !(1u64 << from)) | (1u64 << to);
                 }
-            },
+            }
             Move::Castle { from, to, rook } => {
                 if board & (1u64 << from) != 0 {
                     return (board & !(1u64 << from)) | (1u64 << to);
                 }
 
-                let new_rook = if to > from {
-                    to - 1
-                }else {
-                    to + 1
-                };
+                let new_rook = if to > from { to - 1 } else { to + 1 };
 
                 if board & (1u64 << rook) != 0 {
                     return (board & !(1u64 << rook)) | (1u64 << new_rook);
                 }
 
                 board
-            },
+            }
             Move::EnPassant { from, to, captured } => {
                 if board & (1u64 << from) != 0 {
                     board = (board & !(1u64 << from)) | (1u64 << to);
@@ -439,8 +545,12 @@ impl Board {
                 }
 
                 board
-            },
-            Move::Promotion { from, to, promotion } => {
+            }
+            Move::Promotion {
+                from,
+                to,
+                promotion,
+            } => {
                 if board & (1u64 << from) != 0 {
                     return board & !(1u64 << from);
                 }
@@ -454,9 +564,8 @@ impl Board {
                 }
 
                 board
-            },
+            }
         }
-
     }
 
     pub fn possible_hv(&self, position: u8) -> u64 {
@@ -468,7 +577,8 @@ impl Board {
                 .reverse_bits()
                 .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits())))
             .reverse_bits();
-        let vertical = ((occupied & FILES[position as usize % 8]).wrapping_sub(2u64.wrapping_mul(slider)))
+        let vertical = ((occupied & FILES[position as usize % 8])
+            .wrapping_sub(2u64.wrapping_mul(slider)))
             ^ ((occupied & FILES[position as usize % 8])
                 .reverse_bits()
                 .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits())))
@@ -720,7 +830,7 @@ impl Board {
         moves
     }
 
-    pub fn possible_wq(&self) -> Vec<Move> {    
+    pub fn possible_wq(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
         for i in 0..64 {
@@ -876,7 +986,7 @@ impl Board {
 
         pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && self.white_turn {
+        if pawn_moves != 0 && !self.white_turn {
             moves.push(EnPassant {
                 from: self.en_passant + 9,
                 to: self.en_passant,
@@ -888,7 +998,7 @@ impl Board {
 
         pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && self.white_turn {
+        if pawn_moves != 0 && !self.white_turn {
             moves.push(EnPassant {
                 from: self.en_passant + 7,
                 to: self.en_passant,
@@ -1028,22 +1138,30 @@ impl Board {
 
         if self.white_castle_kingside {
             let unsafe_w = self.unsafe_w();
-            
-            if  unsafe_w & (1u64 << 4) == 0
+
+            if unsafe_w & (1u64 << 4) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 5) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 6) == 0
             {
-                moves.push(Castle { from: 4, to: 6, rook: 7 });
+                moves.push(Castle {
+                    from: 4,
+                    to: 6,
+                    rook: 7,
+                });
             }
         }
 
         if self.white_castle_queenside {
             let unsafe_w = self.unsafe_w();
-            if  (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
+            if (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 3) == 0
                 && unsafe_w & (1u64 << 4) == 0
             {
-                moves.push(Castle { from: 4, to: 2, rook: 0 });
+                moves.push(Castle {
+                    from: 4,
+                    to: 2,
+                    rook: 0,
+                });
             }
         }
 
@@ -1057,21 +1175,29 @@ impl Board {
 
         if self.black_castle_kingside {
             let unsafe_b = self.unsafe_b();
-            if  unsafe_b & (1u64 << 60) == 0
+            if unsafe_b & (1u64 << 60) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 61) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 62) == 0
             {
-                moves.push(Castle { from: 60, to: 62, rook: 63 });
+                moves.push(Castle {
+                    from: 60,
+                    to: 62,
+                    rook: 63,
+                });
             }
         }
 
         if self.black_castle_queenside {
             let unsafe_b = self.unsafe_b();
-            if  (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
+            if (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 59) == 0
                 && unsafe_b & (1u64 << 60) == 0
             {
-                moves.push(Castle { from: 60, to: 58, rook: 56 });
+                moves.push(Castle {
+                    from: 60,
+                    to: 58,
+                    rook: 56,
+                });
             }
         }
 
@@ -1116,7 +1242,6 @@ impl Board {
                 unsafe_squares |= self.possible_da(i);
             }
         }
-
 
         // rook | queen
 
@@ -1225,7 +1350,7 @@ impl Board {
         }
 
         unsafe_squares
-    }    
+    }
 }
 
 impl fmt::Display for Board {
