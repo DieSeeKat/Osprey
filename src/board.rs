@@ -94,7 +94,7 @@ pub struct Board {
     pub black_pieces: u64,
     /* All empty squares */
     pub empty_squares: u64,
-    pub en_passant: u8,
+    pub en_passant: Option<u8>,
     pub white_turn: bool,
     pub white_castle_kingside: bool,
     pub white_castle_queenside: bool,
@@ -135,7 +135,7 @@ impl Board {
         let mut white_castle_queenside = false;
         let mut black_castle_kingside = false;
         let mut black_castle_queenside = false;
-        let mut en_passant: u8 = 0;
+        let mut en_passant: Option<u8> = None;
         let halfmove;
         let fullmove;
 
@@ -201,7 +201,7 @@ impl Board {
                 if *fen_en_passant != "-" {
                     let col = fen_en_passant.chars().nth(0).unwrap() as u8 - 97;
                     let row = fen_en_passant.chars().nth(1).unwrap() as u8 - 49;
-                    en_passant = row * 8 + col;
+                    en_passant = Some(row * 8 + col);
                 }
             }
             None => panic!("Invalid FEN string"),
@@ -323,14 +323,17 @@ impl Board {
 
         fen.push(' ');
 
-        if self.en_passant > 0 {
-            let row: u8 = (self.en_passant / 7) as u8;
-            let col: u8 = (self.en_passant % 7) as u8;
+        match self.en_passant {
+            Some(en_passant) => {
+                let row: u8 = (en_passant / 7) as u8;
+                let col: u8 = (en_passant % 7) as u8;
 
-            fen.push((col + 97) as char);
-            fen.push((row + 49) as char);
-        } else {
-            fen.push('-');
+                fen.push((col + 97) as char);
+                fen.push((row + 49) as char);
+            }
+            None => {
+                fen.push('-');
+            }
         }
 
         fen.push(' ');
@@ -386,7 +389,7 @@ impl Board {
     }
 
     pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
-        let mut new_en_passant = 0;
+        let mut new_en_passant = None;
         let new_white_turn = !self.white_turn;
         let mut new_white_castle_kingside = self.white_castle_kingside;
         let mut new_white_castle_queenside = self.white_castle_queenside;
@@ -423,9 +426,9 @@ impl Board {
         // en passant
         if to.abs_diff(from) == 16 {
             if (1u64 << from & self.black_pawns) != 0 {
-                new_en_passant = to + 8;
+                new_en_passant = Some(to + 8);
             } else if (1u64 << from & self.white_pawns) != 0 {
-                new_en_passant = to - 8;
+                new_en_passant = Some(to - 8);
             }
         }
 
@@ -740,30 +743,31 @@ impl Board {
             }
         }
 
-        if self.en_passant != 0 {
-            // Pawn NE en passant
+        match self.en_passant {
+            Some(en_passant) => {
+                pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << en_passant);
 
-            pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << self.en_passant);
+                if pawn_moves != 0 && self.white_turn {
+                    moves.push(EnPassant {
+                        from: en_passant - 9,
+                        to: en_passant,
+                        captured: en_passant - 8,
+                    });
+                }
 
-            if pawn_moves != 0 && self.white_turn {
-                moves.push(EnPassant {
-                    from: self.en_passant - 9,
-                    to: self.en_passant,
-                    captured: self.en_passant - 8,
-                });
+                // Pawn NW en passant
+
+                pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << en_passant);
+
+                if pawn_moves != 0 && self.white_turn {
+                    moves.push(EnPassant {
+                        from: en_passant - 7,
+                        to: en_passant,
+                        captured: en_passant - 8,
+                    });
+                }
             }
-
-            // Pawn NW en passant
-
-            pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << self.en_passant);
-
-            if pawn_moves != 0 && self.white_turn {
-                moves.push(EnPassant {
-                    from: self.en_passant - 7,
-                    to: self.en_passant,
-                    captured: self.en_passant - 8,
-                });
-            }
+            None => {}
         }
 
         moves
@@ -989,30 +993,33 @@ impl Board {
             }
         }
 
-        if self.en_passant != 0 {
-            // Pawn SW en passant
+        match self.en_passant {
+            Some(en_passant) => {
+                // Pawn SW en passant
 
-            pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
+                pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << en_passant);
 
-            if pawn_moves != 0 && !self.white_turn {
-                moves.push(EnPassant {
-                    from: self.en_passant + 9,
-                    to: self.en_passant,
-                    captured: self.en_passant + 8,
-                });
+                if pawn_moves != 0 && !self.white_turn {
+                    moves.push(EnPassant {
+                        from: en_passant + 9,
+                        to: en_passant,
+                        captured: en_passant + 8,
+                    });
+                }
+
+                // Pawn SE en passant
+
+                pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << en_passant);
+
+                if pawn_moves != 0 && !self.white_turn {
+                    moves.push(EnPassant {
+                        from: en_passant + 7,
+                        to: en_passant,
+                        captured: en_passant + 8,
+                    });
+                }
             }
-
-            // Pawn SE en passant
-
-            pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
-
-            if pawn_moves != 0 && !self.white_turn {
-                moves.push(EnPassant {
-                    from: self.en_passant + 7,
-                    to: self.en_passant,
-                    captured: self.en_passant + 8,
-                });
-            }
+            None => {}
         }
 
         moves
