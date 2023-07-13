@@ -41,7 +41,6 @@ mod perft_tests {
 
     #[test]
     fn start_depth_4() {
-        let mut castles: u64 = 0;
         let board = Board::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         let nodes = perft(&board, 0, 4);
 

@@ -1,3 +1,4 @@
+#![crate_name = "osprey"]
 use crate::board::Board;
 use clap::Parser;
 

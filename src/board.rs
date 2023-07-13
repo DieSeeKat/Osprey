@@ -1,37 +1,37 @@
 use std::fmt;
 
-pub const FILE_A: u64 = 72340172838076673;
-pub const FILE_B: u64 = 144680345676153346;
-pub const FILE_C: u64 = 289360691352306692;
-pub const FILE_D: u64 = 578721382704613384;
-pub const FILE_E: u64 = 1157442765409226768;
-pub const FILE_F: u64 = 2314885530818453536;
-pub const FILE_G: u64 = 4629771061636907072;
-pub const FILE_H: u64 = 9259542123273814144;
-pub const RANK_1: u64 = 255;
-pub const RANK_2: u64 = 65280;
-pub const RANK_3: u64 = 16711680;
-pub const RANK_4: u64 = 4278190080;
-pub const RANK_5: u64 = 1095216660480;
-pub const RANK_6: u64 = 280375465082880;
-pub const RANK_7: u64 = 71776119061217280;
-pub const RANK_8: u64 = 18374686479671623680;
-pub const CENTER: u64 = 103481868288;
-pub const EXTENDED_CENTER: u64 = 66229406269440;
-pub const KING_SIDE: u64 = 9295429630892703744;
-pub const QUEEN_SIDE: u64 = 4755801206503243840;
-pub const WHITE_SQUARES: u64 = 2863311530;
-pub const BLACK_SQUARES: u64 = 1431655765;
-pub const KNIGHT_SPAN: u64 = 43234889994;
-pub const KING_SPAN: u64 = 460039;
+const FILE_A: u64 = 72340172838076673;
+const FILE_B: u64 = 144680345676153346;
+const FILE_C: u64 = 289360691352306692;
+const FILE_D: u64 = 578721382704613384;
+const FILE_E: u64 = 1157442765409226768;
+const FILE_F: u64 = 2314885530818453536;
+const FILE_G: u64 = 4629771061636907072;
+const FILE_H: u64 = 9259542123273814144;
+const RANK_1: u64 = 255;
+const RANK_2: u64 = 65280;
+const RANK_3: u64 = 16711680;
+const RANK_4: u64 = 4278190080;
+const RANK_5: u64 = 1095216660480;
+const RANK_6: u64 = 280375465082880;
+const RANK_7: u64 = 71776119061217280;
+const RANK_8: u64 = 18374686479671623680;
+const CENTER: u64 = 103481868288;
+const EXTENDED_CENTER: u64 = 66229406269440;
+const KING_SIDE: u64 = 9295429630892703744;
+const QUEEN_SIDE: u64 = 4755801206503243840;
+const WHITE_SQUARES: u64 = 2863311530;
+const BLACK_SQUARES: u64 = 1431655765;
+const KNIGHT_SPAN: u64 = 43234889994;
+const KING_SPAN: u64 = 460039;
 
-pub const RANKS: [u64; 8] = [
+const RANKS: [u64; 8] = [
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
 ];
-pub const FILES: [u64; 8] = [
+const FILES: [u64; 8] = [
     FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
 ];
-pub const DIAGONALS: [u64; 15] = [
+const DIAGONALS: [u64; 15] = [
     0x1,
     0x102,
     0x10204,
@@ -49,7 +49,7 @@ pub const DIAGONALS: [u64; 15] = [
     0x8000000000000000,
 ];
 
-pub const ANTI_DIAGONALS: [u64; 15] = [
+const ANTI_DIAGONALS: [u64; 15] = [
     0x80,
     0x8040,
     0x804020,
@@ -67,50 +67,134 @@ pub const ANTI_DIAGONALS: [u64; 15] = [
     0x100000000000000,
 ];
 
+/// A move of a piece on the board.
 #[derive(Debug, PartialEq)]
 pub enum Move {
+    /// 
+    /// A normal move.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `from` - The position of the piece to be moved as a number between 0 and 63 (both included).
+    /// * `to` - The position to move the piece to as a number between 0 and 63 (both included).
+    /// 
     Normal { from: u8, to: u8 },
+    /// 
+    /// A castling move.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `from` - The position of the king to be moved as a number between 0 and 63 (both included).
+    /// * `to` - The position to move the king to as a number between 0 and 63 (both included).
+    /// * `rook` - The position of the rook to be moved as a number between 0 and 63 (both included).
+    /// 
     Castle { from: u8, to: u8, rook: u8 },
+    /// 
+    /// An en passant move.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `from` - The position of the pawn to be moved as a number between 0 and 63 (both included).
+    /// * `to` - The position to move the pawn to as a number between 0 and 63 (both included).
+    /// * `captured` - The position of the pawn to be captured as a number between 0 and 63 (both included).
+    /// 
     EnPassant { from: u8, to: u8, captured: u8 },
+    ///
+    /// A promotion move.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `from` - The position of the pawn to be moved as a number between 0 and 63 (both included).
+    /// * `to` - The position to move the pawn to as a number between 0 and 63 (both included).
+    /// * `promotion` - The piece to promote to as a character (b n r q B N R Q).
+    /// 
     Promotion { from: u8, to: u8, promotion: char },
 }
+
+///
+/// A chess board.
+/// 
+/// Representation of pieces are done by bitboards. Each bitboard represents a type of piece.
+/// 
+/// The bitboard is a 64-bit unsigned integer. Each bit represents a square on the board.
+/// 
+/// The least significant bit represents the square a1 and the most significant bit represents the square h8.
+/// The bits are ordered first from left to right and next from top to bottom.
+/// 
 #[derive(Debug, Clone, Copy)]
 pub struct Board {
-    pub white_pawns: u64,
-    pub white_knights: u64,
-    pub white_bishops: u64,
-    pub white_rooks: u64,
-    pub white_queens: u64,
-    pub white_king: u64,
-    pub black_pawns: u64,
-    pub black_knights: u64,
-    pub black_bishops: u64,
-    pub black_rooks: u64,
-    pub black_queens: u64,
-    pub black_king: u64,
-    /* All squares that black can capture (white but not king) */
-    pub white_pieces: u64,
-    /* All squares that white can capture (black but not king) */
-    pub black_pieces: u64,
-    /* All empty squares */
-    pub empty_squares: u64,
-    pub en_passant: Option<u8>,
+    /// A bitboard representing the white pawns.
+    white_pawns: u64,
+    /// A bitboard representing the white knights.
+    white_knights: u64,
+    /// A bitboard representing the white bishops.
+    white_bishops: u64,
+    /// A bitboard representing the white rooks.
+    white_rooks: u64,
+    /// A bitboard representing the white queens.
+    white_queens: u64,
+    /// A bitboard representing the white king.
+    white_king: u64,
+    /// A bitboard representing the black pawns.
+    black_pawns: u64,
+    /// A bitboard representing the black knights.
+    black_knights: u64,
+    /// A bitboard representing the black bishops.
+    black_bishops: u64,
+    /// A bitboard representing the black rooks.
+    black_rooks: u64,
+    /// A bitboard representing the black queens.
+    black_queens: u64,
+    /// A bitboard representing the black king.
+    black_king: u64,
+    /// A bitboard representing all squares (not the king) that can be captured by black pieces.
+    white_pieces: u64,
+    /// A bitboard representing all squares (not the king) that can be captured by white pieces.
+    black_pieces: u64,
+    /// A bitboard representing all empty squares.
+    empty_squares: u64,
+    /// The position of the en passant square as a number between 0 and 63 (both included).
+    en_passant: Option<u8>,
+    /// A boolean representing whose turn it is.
     pub white_turn: bool,
-    pub white_castle_kingside: bool,
-    pub white_castle_queenside: bool,
-    pub black_castle_kingside: bool,
-    pub black_castle_queenside: bool,
+    /// A boolean representing whether white can castle kingside.
+    white_castle_kingside: bool,
+    /// A boolean representing whether white can castle queenside.
+    white_castle_queenside: bool,
+    /// A boolean representing whether black can castle kingside.
+    black_castle_kingside: bool,
+    /// A boolean representing whether black can castle queenside.
+    black_castle_queenside: bool,
+    /// The number of halfmoves since the last capture or pawn advance.
     pub halfmove: u8,
+    /// The number of the full move.
     pub fullmove: u8,
 }
 
 impl Board {
+    ///
+    /// Creates a new board from a FEN string.
+    /// 
+    /// Example FEN string for the starting position:
+    /// 
+    /// ```
+    /// use osprey::Board;
+    /// 
+    /// let board = Board::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    /// ```
+    /// 
+    /// # Arguments
+    /// 
+    /// * `input` - The FEN string.
+    /// 
     pub fn new(input: &str) -> Board {
         let mut row = 7;
         let mut col = 0;
 
+        // split FEN string by spaces
         let fen: Vec<&str> = input.split_whitespace().collect();
 
+        // get FEN string parts
         let fen_pieces = fen.get(0);
         let fen_turn = fen.get(1);
         let fen_castling = fen.get(2);
@@ -118,6 +202,7 @@ impl Board {
         let fen_half_move = fen.get(4);
         let fen_full_move = fen.get(5);
 
+        // initialize bitboards
         let mut white_pawns: u64 = 0;
         let mut white_knights: u64 = 0;
         let mut white_bishops: u64 = 0;
@@ -130,6 +215,8 @@ impl Board {
         let mut black_rooks: u64 = 0;
         let mut black_queens: u64 = 0;
         let mut black_king: u64 = 0;
+
+        // initialize meta data
         let white_turn;
         let mut white_castle_kingside = false;
         let mut white_castle_queenside = false;
@@ -139,6 +226,7 @@ impl Board {
         let halfmove;
         let fullmove;
 
+        // build bitboards from FEN string
         match fen_pieces {
             Some(fen_pieces) => {
                 for c in fen_pieces.chars() {
@@ -171,6 +259,7 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
+        // set turn
         match fen_turn {
             Some(fen_turn) => match *fen_turn {
                 "w" => white_turn = true,
@@ -180,6 +269,7 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
+        // set castling
         match fen_castling {
             Some(fen_castling) => {
                 for c in fen_castling.chars() {
@@ -196,6 +286,7 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
+        // set en passant
         match fen_en_passant {
             Some(fen_en_passant) => {
                 if *fen_en_passant != "-" {
@@ -207,6 +298,7 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
+        // set halfmove and fullmove
         match fen_half_move {
             Some(fen_half_move) => {
                 let half_move = fen_half_move.parse::<u8>();
@@ -229,6 +321,7 @@ impl Board {
             None => panic!("Invalid FEN string"),
         }
 
+        // set white and black pieces
         let white_pieces: u64 =
             white_pawns | white_knights | white_bishops | white_rooks | white_queens;
         let black_pieces: u64 =
@@ -262,6 +355,9 @@ impl Board {
         }
     }
 
+    ///
+    /// Exports the board as a FEN string.
+    /// 
     pub fn export_fen(&self) -> String {
         let mut fen = String::new();
         let mut empty = 0;
@@ -347,6 +443,17 @@ impl Board {
         fen
     }
 
+    ///
+    /// The the piece on the given square.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `position` - The position of the square as a number between 0 and 63 (both included).
+    /// 
+    /// # Returns
+    /// 
+    /// The character representing the piece on the given square. 
+    /// [p, b, n, r, q, k, P, B, N, R, Q, K] for [black pawn, black bishop, black knight, black rook, black queen, black king, white pawn, white bishop, white knight, white rook, white queen, white king].
     pub fn square(&self, position: u8) -> Option<char> {
         if self.white_pawns & (1u64 << position) != 0 {
             return Some('P');
@@ -388,7 +495,19 @@ impl Board {
         return None;
     }
 
+    ///
+    /// Make a move on the board.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `m` - The move to make.
+    /// 
+    /// # Returns
+    /// 
+    /// A new board if the move is legal, otherwise the old board.
+    /// 
     pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
+        // initialize meta data
         let mut new_en_passant = None;
         let new_white_turn = !self.white_turn;
         let mut new_white_castle_kingside = self.white_castle_kingside;
@@ -398,6 +517,7 @@ impl Board {
         let new_halfmove = self.halfmove + 1;
         let new_fullmove = self.fullmove + 1;
 
+        // set new boards
         let new_white_pawns = self.move_board(m, 'P');
         let new_white_knights = self.move_board(m, 'N');
         let new_white_bishops = self.move_board(m, 'B');
@@ -412,6 +532,7 @@ impl Board {
         let new_black_queens = self.move_board(m, 'q');
         let new_black_king = self.move_board(m, 'k');
 
+        // get from and to
         let (from, to) = match m {
             Move::Normal { from, to } => (*from, *to),
             Move::Castle { from, to, rook } => (*from, *to),
@@ -452,7 +573,8 @@ impl Board {
         } else if ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63)) != 0 {
             new_black_castle_kingside = false;
         }
-
+        
+        // set white and black pieces
         let new_white_pieces = new_white_pawns
             | new_white_knights
             | new_white_bishops
@@ -465,9 +587,11 @@ impl Board {
             | new_black_rooks
             | new_black_queens;
 
+        // set empty squares
         let new_empty_squares =
             !(new_white_pieces | new_black_pieces | new_white_king | new_black_king);
 
+        // create new board
         let new_board = Board {
             white_pawns: new_white_pawns,
             black_pawns: new_black_pawns,
@@ -494,17 +618,33 @@ impl Board {
             fullmove: new_fullmove,
         };
 
+        // check if move is legal
         if (new_board.white_king & new_board.unsafe_w() == 0 && self.white_turn)
             || (new_board.black_king & new_board.unsafe_b() == 0 && !self.white_turn)
         {
+            // return new board
             return Ok(new_board);
         } else {
+            // return old board with error
             return Err(self.clone());
         }
     }
 
+    /// 
+    /// Modifies and returns the board with the given move applied.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `m` - The move to be applied.
+    /// * `board_type` - The type of piece's board to be modified.
+    /// 
+    /// # Returns
+    /// 
+    /// The modified board.
+    /// 
     pub fn move_board(&self, m: &Move, board_type: char) -> u64 {
-        let mut board = match board_type {
+        // get respective bitboard
+        let board = match board_type {
             'P' => self.white_pawns,
             'N' => self.white_knights,
             'B' => self.white_bishops,
@@ -522,22 +662,31 @@ impl Board {
             _ => panic!("Invalid board type"),
         };
 
+        // make move
         match m {
             Move::Normal { from, to } => {
                 if board & (1u64 << from) == 0 {
+                    // not "from" piece; empty "to" position
                     return board & !(1u64 << to);
                 } else {
+                    // "from" piece; move from "from" to "to" position
                     return (board & !(1u64 << from)) | (1u64 << to);
                 }
             }
             Move::Castle { from, to, rook } => {
                 if board & (1u64 << from) != 0 {
+                    // the king bitboard
+                    // move the king from "from" to "to" position
                     return (board & !(1u64 << from)) | (1u64 << to);
                 }
-
-                let new_rook = if to > from { to - 1 } else { to + 1 };
+                // not king
 
                 if board & (1u64 << rook) != 0 {
+                    // the rook bitboard
+                    // calulate new rook position
+                    let new_rook = if to > from { to - 1 } else { to + 1 };
+
+                    // move the rook from "rook" to "new_rook" position
                     return (board & !(1u64 << rook)) | (1u64 << new_rook);
                 }
 
@@ -545,11 +694,16 @@ impl Board {
             }
             Move::EnPassant { from, to, captured } => {
                 if board & (1u64 << from) != 0 {
-                    board = (board & !(1u64 << from)) | (1u64 << to);
+                    // the pawn bitboard
+                    // move the pawn from "from" to "to" position
+                    return (board & !(1u64 << from)) | 1u64 << to;
                 }
 
+                // not pawn
                 if board & (1u64 << captured) != 0 {
-                    board = board & !(1u64 << captured);
+                    // the captured bitboard
+                    // remove the captured piece from the board
+                    return board & !(1u64 << captured);
                 }
 
                 board
@@ -560,14 +714,20 @@ impl Board {
                 promotion,
             } => {
                 if board & (1u64 << from) != 0 {
+                    // the pawn bitboard
+                    // remove the pawn from the board
                     return board & !(1u64 << from);
                 }
 
-                if promotion == &board_type {
+                if promotion == &board_type { 
+                    // the promoted piece bitboard
+                    // add the promoted piece to the board
                     return board | (1u64 << to);
                 }
 
                 if board & (1u64 << to) != 0 {
+                    // captured bitboard
+                    // remove the captured piece from the board
                     return board & !(1u64 << to);
                 }
 
@@ -576,6 +736,17 @@ impl Board {
         }
     }
 
+    ///
+    /// Calculates the positions possibly moved to by a horizontal or vertical slider.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `position` - The position of the slider as a number between 0 and 63 (both included).
+    /// 
+    /// # Returns
+    /// 
+    /// A bitboard representing the possible positions.
+    /// 
     pub fn possible_hv(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
@@ -595,6 +766,17 @@ impl Board {
         (horizontal & RANKS[(position / 8) as usize]) | (vertical & FILES[(position % 8) as usize])
     }
 
+    ///
+    /// Calculates the positions possibly moved to by a diagonal or anti-diagonal slider.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `position` - The position of the slider as a number between 0 and 63 (both included).
+    /// 
+    /// # Returns
+    /// 
+    /// A bitboard representing the possible positions.
+    /// 
     pub fn possible_da(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
@@ -617,6 +799,13 @@ impl Board {
             | (anti_diagonal & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
     }
 
+    ///
+    /// Get all pseudo-legal moves (without worrying about check) white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal moves white can make.
+    /// 
     pub fn possible_white(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -631,6 +820,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal moves (without worrying about check) black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal moves black can make.
+    /// 
     pub fn possible_black(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -645,6 +841,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal pawn moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal pawn moves white can make.
+    /// 
     pub fn possible_wp(&self) -> Vec<Move> {
         use Move::*;
 
@@ -773,6 +976,12 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal knight moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal knight moves white can make.
     pub fn possible_wn(&self) -> Vec<Move> {
         use Move::*;
 
@@ -805,6 +1014,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal bishop moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal bishop moves white can make.
+    /// 
     pub fn possible_wb(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -823,6 +1039,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal rook moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal rook moves white can make.
+    ///     
     pub fn possible_wr(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -841,6 +1064,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal queen moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal queen moves white can make.
+    /// 
     pub fn possible_wq(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -861,6 +1091,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal king moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal king moves white can make.
+    /// 
     pub fn possible_wk(&self) -> Vec<Move> {
         use Move::*;
 
@@ -895,6 +1132,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal pawn moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal pawn moves black can make.
+    /// 
     pub fn possible_bp(&self) -> Vec<Move> {
         use Move::*;
 
@@ -1025,6 +1269,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal knight moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal knight moves black can make.
+    /// 
     pub fn possible_bn(&self) -> Vec<Move> {
         use Move::*;
 
@@ -1057,6 +1308,13 @@ impl Board {
         moves
     }
 
+    /// 
+    /// Get all pseudo-legal bishop moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal bishop moves black can make.
+    /// 
     pub fn possible_bb(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1075,6 +1333,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal rook moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal rook moves black can make.
+    /// 
     pub fn possible_br(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1093,6 +1358,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal queen moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal queen moves black can make.
+    /// 
     pub fn possible_bq(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1113,6 +1385,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all pseudo-legal king moves black can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all pseudo-legal king moves black can make.
+    /// 
     pub fn possible_bk(&self) -> Vec<Move> {
         use Move::*;
 
@@ -1147,6 +1426,13 @@ impl Board {
         moves
     }
 
+    /// 
+    /// Get all castle moves white can make.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of all castle moves white can make.
+    /// 
     pub fn possible_wc(&self) -> Vec<Move> {
         use Move::*;
 
@@ -1186,6 +1472,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all castle moves black can make.
+    ///     
+    /// # Returns
+    /// 
+    /// A vector of all castle moves black can make.
+    /// 
     pub fn possible_bc(&self) -> Vec<Move> {
         use Move::*;
 
@@ -1225,6 +1518,13 @@ impl Board {
         moves
     }
 
+    ///
+    /// Get all unsafe squares for white.
+    /// 
+    /// # Returns
+    /// 
+    /// A bitboard representing all squares attacked by black.
+    /// 
     pub fn unsafe_w(&self) -> u64 {
         let mut unsafe_squares: u64 = 0;
 
@@ -1299,6 +1599,13 @@ impl Board {
         unsafe_squares
     }
 
+    ///
+    /// Get all unsafe squares for black.
+    /// 
+    /// # Returns
+    /// 
+    /// A bitboard representing all squares attacked by white.
+    /// 
     pub fn unsafe_b(&self) -> u64 {
         let mut unsafe_squares: u64 = 0;
 
