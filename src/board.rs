@@ -76,32 +76,32 @@ pub enum Move {
 }
 #[derive(Debug)]
 pub struct Board {
-    white_pawns: u64,
-    white_knights: u64,
-    white_bishops: u64,
-    white_rooks: u64,
-    white_queens: u64,
-    white_king: u64,
-    black_pawns: u64,
-    black_knights: u64,
-    black_bishops: u64,
-    black_rooks: u64,
-    black_queens: u64,
-    black_king: u64,
+    pub white_pawns: u64,
+    pub white_knights: u64,
+    pub white_bishops: u64,
+    pub white_rooks: u64,
+    pub white_queens: u64,
+    pub white_king: u64,
+    pub black_pawns: u64,
+    pub black_knights: u64,
+    pub black_bishops: u64,
+    pub black_rooks: u64,
+    pub black_queens: u64,
+    pub black_king: u64,
     /* All squares that black can capture (white but not king) */
-    white_pieces: u64,
+    pub white_pieces: u64,
     /* All squares that white can capture (black but not king) */
-    black_pieces: u64,
+    pub black_pieces: u64,
     /* All empty squares */
     pub empty_squares: u64,
-    en_passant: u8,
-    white_turn: bool,
-    white_castle_kingside: bool,
-    white_castle_queenside: bool,
-    black_castle_kingside: bool,
-    black_castle_queenside: bool,
-    halfmove: u8,
-    fullmove: u8,
+    pub en_passant: u8,
+    pub white_turn: bool,
+    pub white_castle_kingside: bool,
+    pub white_castle_queenside: bool,
+    pub black_castle_kingside: bool,
+    pub black_castle_queenside: bool,
+    pub halfmove: u8,
+    pub fullmove: u8,
 }
 
 impl Board {
@@ -383,6 +383,80 @@ impl Board {
         }
 
         return None;
+    }
+
+    pub fn make_move(&self, m: &Move, board_type: char) -> u64 {
+        let mut board = match board_type {
+            'P' => self.white_pawns,
+            'N' => self.white_knights,
+            'B' => self.white_bishops,
+            'R' => self.white_rooks,
+            'Q' => self.white_queens,
+            'K' => self.white_king,
+
+            'p' => self.black_pawns,
+            'n' => self.black_knights,
+            'b' => self.black_bishops,
+            'r' => self.black_rooks,
+            'q' => self.black_queens,
+            'k' => self.black_king,
+
+            _ => panic!("Invalid board type"),
+        };
+
+        match m {
+            Move::Normal { from, to } => {
+                if board & (1u64 << from) == 0 {
+                    return board & !(1u64 << to);
+                } else {
+                    return (board & !(1u64 << from)) | (1u64 << to);
+                }
+            },
+            Move::Castle { from, to, rook } => {
+                if board & (1u64 << from) != 0 {
+                    return (board & !(1u64 << from)) | (1u64 << to);
+                }
+
+                let new_rook = if to > from {
+                    to - 1
+                }else {
+                    to + 1
+                };
+
+                if board & (1u64 << rook) != 0 {
+                    return (board & !(1u64 << rook)) | (1u64 << new_rook);
+                }
+
+                board
+            },
+            Move::EnPassant { from, to, captured } => {
+                if board & (1u64 << from) != 0 {
+                    board = (board & !(1u64 << from)) | (1u64 << to);
+                }
+
+                if board & (1u64 << captured) != 0 {
+                    board = board & !(1u64 << captured);
+                }
+
+                board
+            },
+            Move::Promotion { from, to, promotion } => {
+                if board & (1u64 << from) != 0 {
+                    return board & !(1u64 << from);
+                }
+
+                if promotion == &board_type {
+                    return board | (1u64 << to);
+                }
+
+                if board & (1u64 << to) != 0 {
+                    return board & !(1u64 << to);
+                }
+
+                board
+            },
+        }
+
     }
 
     pub fn possible_hv(&self, position: u8) -> u64 {
