@@ -1019,6 +1019,92 @@ mod king_move {
 }
 
 #[cfg(test)]
+mod castling {
+    use crate::osprey::{Board, Move};
+    use Move::*;
+
+    #[test]
+    fn castling_w_kq() {
+        let board = Board::new("8/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 4, to: 6, rook: 7 },
+            Castle { from: 4, to: 2, rook: 0 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn castling_w_k() {
+        let board = Board::new("8/8/8/8/8/8/8/R3K2R w K - 0 1");
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 4, to: 6, rook: 7 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn castling_w_q() {
+        let board = Board::new("8/8/8/8/8/8/8/R3K2R w Q - 0 1");
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 4, to: 2, rook: 0 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn castling_b_kq() {
+        let board = Board::new("r3k2r/8/8/8/8/8/8/8 w kq - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 60, to: 62, rook: 63 },
+            Castle { from: 60, to: 58, rook: 56 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn castling_b_k() {
+        let board = Board::new("r3k2r/8/8/8/8/8/8/8 w k - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 60, to: 62, rook: 63 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+
+    #[test]
+    fn castling_b_q() {
+        let board = Board::new("r3k2r/8/8/8/8/8/8/8 w q - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![
+            Castle { from: 60, to: 58, rook: 56 },
+        ];
+        assert_eq!(moves.len(), correct_moves.len());   
+        for m in moves {
+            assert!(correct_moves.contains(&m));
+        }
+    }
+}
+
+#[cfg(test)]
 mod unsafe_squares {
     use crate::osprey::Board;
 

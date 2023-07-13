@@ -945,6 +945,58 @@ impl Board {
         moves
     }
 
+    pub fn possible_wc(&self) -> Vec<Move> {
+        use Move::*;
+
+        let mut moves: Vec<Move> = Vec::new();
+
+        if self.white_castle_kingside {
+            if  self.unsafe_w() & (1u64 >> 4) == 0
+                && self.unsafe_w() & (1u64 >> 5) == 0
+                && self.unsafe_w() & (1u64 >> 6) == 0
+            {
+                moves.push(Castle { from: 4, to: 6, rook: 7 });
+            }
+        }
+
+        if self.white_castle_queenside {
+            if  self.unsafe_w() & (1u64 >> 2) == 0
+                && self.unsafe_w() & (1u64 >> 3) == 0
+                && self.unsafe_w() & (1u64 >> 4) == 0
+            {
+                moves.push(Castle { from: 4, to: 2, rook: 0 });
+            }
+        }
+
+        moves
+    }
+
+    pub fn possible_bc(&self) -> Vec<Move> {
+        use Move::*;
+
+        let mut moves: Vec<Move> = Vec::new();
+
+        if self.black_castle_kingside {
+            if  self.unsafe_b() & (1u64 >> 60) == 0
+                && self.unsafe_b() & (1u64 >> 61) == 0
+                && self.unsafe_b() & (1u64 >> 62) == 0
+            {
+                moves.push(Castle { from: 60, to: 62, rook: 63 });
+            }
+        }
+
+        if self.black_castle_queenside {
+            if  self.unsafe_b() & (1u64 >> 58) == 0
+                && self.unsafe_b() & (1u64 >> 59) == 0
+                && self.unsafe_b() & (1u64 >> 60) == 0
+            {
+                moves.push(Castle { from: 60, to: 58, rook: 56 });
+            }
+        }
+
+        moves
+    }
+
     pub fn unsafe_w(&self) -> u64 {
         let mut unsafe_squares: u64 = 0;
 
