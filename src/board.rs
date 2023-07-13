@@ -953,18 +953,21 @@ impl Board {
         let mut moves: Vec<Move> = Vec::new();
 
         if self.white_castle_kingside {
-            if  self.unsafe_w() & (1u64 >> 4) == 0
-                && self.unsafe_w() & (1u64 >> 5) == 0
-                && self.unsafe_w() & (1u64 >> 6) == 0
+            let unsafe_w = self.unsafe_w();
+            
+            if  unsafe_w & (1u64 << 4) == 0
+                && (unsafe_w | !self.empty_squares) & (1u64 << 5) == 0
+                && (unsafe_w | !self.empty_squares) & (1u64 << 6) == 0
             {
                 moves.push(Castle { from: 4, to: 6, rook: 7 });
             }
         }
 
         if self.white_castle_queenside {
-            if  self.unsafe_w() & (1u64 >> 2) == 0
-                && self.unsafe_w() & (1u64 >> 3) == 0
-                && self.unsafe_w() & (1u64 >> 4) == 0
+            let unsafe_w = self.unsafe_w();
+            if  (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
+                && (unsafe_w | !self.empty_squares) & (1u64 << 3) == 0
+                && unsafe_w & (1u64 << 4) == 0
             {
                 moves.push(Castle { from: 4, to: 2, rook: 0 });
             }
@@ -979,18 +982,20 @@ impl Board {
         let mut moves: Vec<Move> = Vec::new();
 
         if self.black_castle_kingside {
-            if  self.unsafe_b() & (1u64 >> 60) == 0
-                && self.unsafe_b() & (1u64 >> 61) == 0
-                && self.unsafe_b() & (1u64 >> 62) == 0
+            let unsafe_b = self.unsafe_b();
+            if  unsafe_b & (1u64 << 60) == 0
+                && (unsafe_b | !self.empty_squares) & (1u64 << 61) == 0
+                && (unsafe_b | !self.empty_squares) & (1u64 << 62) == 0
             {
                 moves.push(Castle { from: 60, to: 62, rook: 63 });
             }
         }
 
         if self.black_castle_queenside {
-            if  self.unsafe_b() & (1u64 >> 58) == 0
-                && self.unsafe_b() & (1u64 >> 59) == 0
-                && self.unsafe_b() & (1u64 >> 60) == 0
+            let unsafe_b = self.unsafe_b();
+            if  (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
+                && (unsafe_b | !self.empty_squares) & (1u64 << 59) == 0
+                && unsafe_b & (1u64 << 60) == 0
             {
                 moves.push(Castle { from: 60, to: 58, rook: 56 });
             }

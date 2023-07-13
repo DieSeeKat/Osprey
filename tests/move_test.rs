@@ -1022,6 +1022,7 @@ mod king_move {
 mod castling {
     use crate::osprey::{Board, Move};
     use Move::*;
+    use osprey::draw_bit_board;
 
     #[test]
     fn castling_w_kq() {
@@ -1064,6 +1065,34 @@ mod castling {
     }
 
     #[test]
+    fn castling_w_unsafe() {
+        let board = Board::new("2r3r1/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+
+        draw_bit_board(board.unsafe_w());
+        draw_bit_board(1u64 << 2);
+
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+    }
+
+    #[test]
+    fn castling_w_checked() {
+        let board = Board::new("4r3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+    }
+
+    #[test]
+    fn castling_w_blocked() {
+        let board = Board::new("8/8/8/8/8/8/8/R2PKP1R w KQ - 0 1");
+        let moves = board.possible_wc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+    }
+
+    #[test]
     fn castling_b_kq() {
         let board = Board::new("r3k2r/8/8/8/8/8/8/8 w kq - 0 1");
         let moves = board.possible_bc();
@@ -1101,6 +1130,30 @@ mod castling {
         for m in moves {
             assert!(correct_moves.contains(&m));
         }
+    }
+
+    #[test]
+    fn castling_b_unsafe() {
+        let board = Board::new("r3k2r/8/8/8/8/8/8/2R2R2 w q - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+    }
+
+    #[test]
+    fn castling_b_checked() {
+        let board = Board::new("r3k2r/8/8/8/8/8/8/4R3 w q - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
+    }
+
+    #[test]
+    fn castling_b_blocked() {
+        let board = Board::new("r2pkp1r/8/8/8/8/8/8/8 w q - 0 1");
+        let moves = board.possible_bc();
+        let correct_moves: Vec<Move> = vec![];
+        assert_eq!(moves.len(), correct_moves.len());
     }
 }
 
