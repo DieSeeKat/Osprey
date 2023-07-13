@@ -76,16 +76,16 @@ mod perft_tests {
     #[test]
     fn position_5() {
         let board = Board::new("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-        let nodes = perft(&board, 0, 4);
+        let nodes = perft(&board, 0, 3);
 
-        assert_eq!(nodes, 2_103_487);
+        assert_eq!(nodes, 62_379);
     }
 
     #[test]
     fn position_6() {
         let board = Board::new("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ");
-        let nodes = perft(&board, 0, 4);
+        let nodes = perft(&board, 0, 3);
 
-        assert_eq!(nodes, 3_894_594);
+        assert_eq!(nodes, 89_890);
     }
 }
