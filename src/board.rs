@@ -384,9 +384,8 @@ impl Board {
 
         return None;
     }
-    
-    pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
 
+    pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
         let mut new_en_passant = 0;
         let new_white_turn = !self.white_turn;
         let mut new_white_castle_kingside = self.white_castle_kingside;
@@ -395,14 +394,14 @@ impl Board {
         let mut new_black_castle_queenside = self.black_castle_queenside;
         let new_halfmove = self.halfmove + 1;
         let new_fullmove = self.fullmove + 1;
-        
+
         let new_white_pawns = self.move_board(m, 'P');
         let new_white_knights = self.move_board(m, 'N');
         let new_white_bishops = self.move_board(m, 'B');
         let new_white_rooks = self.move_board(m, 'R');
         let new_white_queens = self.move_board(m, 'Q');
         let new_white_king = self.move_board(m, 'K');
-        
+
         let new_black_pawns = self.move_board(m, 'p');
         let new_black_knights = self.move_board(m, 'n');
         let new_black_bishops = self.move_board(m, 'b');
@@ -429,21 +428,25 @@ impl Board {
                 new_en_passant = to - 8;
             }
         }
-    
+
         // castling
         if (1u64 << from & self.white_king) != 0 {
             new_white_castle_kingside = false;
             new_white_castle_queenside = false;
-        } else if (1u64 << from & self.white_rooks & (1u64 << 0)) != 0 {
-            new_white_castle_queenside = false;
-        } else if (1u64 << from & self.white_rooks & (1u64 << 7)) != 0 {
-            new_white_castle_kingside = false;
         } else if (1u64 << from & self.black_king) != 0 {
             new_black_castle_kingside = false;
             new_black_castle_queenside = false;
-        } else if (1u64 << from & self.black_rooks & (1u64 << 56)) != 0 {
+        }
+
+        if ((1u64 << from | 1u64 << to) & self.white_rooks & (1u64 << 0)) != 0 {
+            new_white_castle_queenside = false;
+        } else if ((1u64 << from | 1u64 << to) & self.white_rooks & 1u64 << 7) != 0 {
+            new_white_castle_kingside = false;
+        }
+
+        if ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 56)) != 0 {
             new_black_castle_queenside = false;
-        } else if (1u64 << from & self.black_rooks & (1u64 << 63)) != 0 {
+        } else if ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63)) != 0 {
             new_black_castle_kingside = false;
         }
 
@@ -459,10 +462,11 @@ impl Board {
             | new_black_rooks
             | new_black_queens;
 
-        let new_empty_squares = !(new_white_pieces | new_black_pieces | new_white_king | new_black_king);
+        let new_empty_squares =
+            !(new_white_pieces | new_black_pieces | new_white_king | new_black_king);
 
-        let new_board = Board { 
-            white_pawns: new_white_pawns, 
+        let new_board = Board {
+            white_pawns: new_white_pawns,
             black_pawns: new_black_pawns,
             white_knights: new_white_knights,
             black_knights: new_black_knights,
@@ -487,12 +491,13 @@ impl Board {
             fullmove: new_fullmove,
         };
 
-        if (new_board.white_king & new_board.unsafe_w() == 0 && self.white_turn) || (new_board.black_king & new_board.unsafe_b() == 0 && !self.white_turn) {
+        if (new_board.white_king & new_board.unsafe_w() == 0 && self.white_turn)
+            || (new_board.black_king & new_board.unsafe_b() == 0 && !self.white_turn)
+        {
             return Ok(new_board);
         } else {
             return Err(self.clone());
-        } 
-
+        }
     }
 
     pub fn move_board(&self, m: &Move, board_type: char) -> u64 {
@@ -592,17 +597,17 @@ impl Board {
         let occupied = !self.empty_squares;
 
         let diagonal = (occupied & DIAGONALS[position as usize / 8 + position as usize % 8])
-            .wrapping_sub(2 * slider)
+            .wrapping_sub(2u64.wrapping_mul(slider))
             ^ (occupied & DIAGONALS[position as usize / 8 + position as usize % 8])
                 .reverse_bits()
-                .wrapping_sub(2 * slider.reverse_bits())
+                .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits()))
                 .reverse_bits();
         let anti_diagonal = (occupied
             & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
-            .wrapping_sub(2 * slider)
+            .wrapping_sub(2u64.wrapping_mul(slider))
             ^ (occupied & ANTI_DIAGONALS[position as usize / 8 + 7 - position as usize % 8])
                 .reverse_bits()
-                .wrapping_sub(2 * slider.reverse_bits())
+                .wrapping_sub(2u64.wrapping_mul(slider.reverse_bits()))
                 .reverse_bits();
 
         (diagonal & DIAGONALS[position as usize / 8 + position as usize % 8])
@@ -735,28 +740,30 @@ impl Board {
             }
         }
 
-        // Pawn NE en passant
+        if self.en_passant != 0 {
+            // Pawn NE en passant
 
-        pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << self.en_passant);
+            pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant {
-                from: self.en_passant - 9,
-                to: self.en_passant,
-                captured: self.en_passant - 8,
-            });
-        }
+            if pawn_moves != 0 && self.white_turn {
+                moves.push(EnPassant {
+                    from: self.en_passant - 9,
+                    to: self.en_passant,
+                    captured: self.en_passant - 8,
+                });
+            }
 
-        // Pawn NW en passant
+            // Pawn NW en passant
 
-        pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << self.en_passant);
+            pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && self.white_turn {
-            moves.push(EnPassant {
-                from: self.en_passant - 7,
-                to: self.en_passant,
-                captured: self.en_passant - 8,
-            });
+            if pawn_moves != 0 && self.white_turn {
+                moves.push(EnPassant {
+                    from: self.en_passant - 7,
+                    to: self.en_passant,
+                    captured: self.en_passant - 8,
+                });
+            }
         }
 
         moves
@@ -982,28 +989,30 @@ impl Board {
             }
         }
 
-        // Pawn SW en passant
+        if self.en_passant != 0 {
+            // Pawn SW en passant
 
-        pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
+            pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && !self.white_turn {
-            moves.push(EnPassant {
-                from: self.en_passant + 9,
-                to: self.en_passant,
-                captured: self.en_passant + 8,
-            });
-        }
+            if pawn_moves != 0 && !self.white_turn {
+                moves.push(EnPassant {
+                    from: self.en_passant + 9,
+                    to: self.en_passant,
+                    captured: self.en_passant + 8,
+                });
+            }
 
-        // Pawn SE en passant
+            // Pawn SE en passant
 
-        pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
+            pawn_moves = (self.black_pawns >> 7) & !FILE_A & !RANK_8 & (1u64 << self.en_passant);
 
-        if pawn_moves != 0 && !self.white_turn {
-            moves.push(EnPassant {
-                from: self.en_passant + 7,
-                to: self.en_passant,
-                captured: self.en_passant + 8,
-            });
+            if pawn_moves != 0 && !self.white_turn {
+                moves.push(EnPassant {
+                    from: self.en_passant + 7,
+                    to: self.en_passant,
+                    captured: self.en_passant + 8,
+                });
+            }
         }
 
         moves
@@ -1153,7 +1162,8 @@ impl Board {
 
         if self.white_castle_queenside {
             let unsafe_w = self.unsafe_w();
-            if (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
+            if !self.empty_squares & (1u64 << 1) == 0
+                && (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 3) == 0
                 && unsafe_w & (1u64 << 4) == 0
             {
@@ -1189,7 +1199,8 @@ impl Board {
 
         if self.black_castle_queenside {
             let unsafe_b = self.unsafe_b();
-            if (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
+            if !self.empty_squares & (1u64 << 57) == 0
+                && (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 59) == 0
                 && unsafe_b & (1u64 << 60) == 0
             {

@@ -591,6 +591,14 @@ mod bishop_moves {
     use Move::*;
 
     #[test]
+    fn overflow() {
+        let board = Board::new("8/8/8/8/8/8/8/B7 w - - 0 1");
+        let moves = board.possible_wb();
+
+        assert_eq!(moves.len(), 7);
+    }
+
+    #[test]
     fn w_bishop_move_border() {
         let board = Board::new("8/8/8/8/3B4/8/8/8 w - - 0 1");
         let moves = board.possible_wb();
