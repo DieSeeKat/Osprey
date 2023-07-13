@@ -434,6 +434,7 @@ impl Board {
         moves.append(&mut self.possible_wr());
         moves.append(&mut self.possible_wb());
         moves.append(&mut self.possible_wn());
+        moves.append(&mut self.possible_wc());
 
         moves
     }
@@ -447,6 +448,7 @@ impl Board {
         moves.append(&mut self.possible_br());
         moves.append(&mut self.possible_bb());
         moves.append(&mut self.possible_bn());
+        moves.append(&mut self.possible_bc());
 
         moves
     }
