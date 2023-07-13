@@ -855,7 +855,6 @@ impl Board {
     /// A vector of all pseudo-legal pawn moves white can make.
     ///
     fn possible_wp(&self) -> Vec<Move> {
-        use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
@@ -911,7 +910,7 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion {
+                    moves.push(Move::Promotion {
                         from: i - 8,
                         to: i,
                         promotion: *promotion,
@@ -927,7 +926,7 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion {
+                    moves.push(Move::Promotion {
                         from: i - 9,
                         to: i,
                         promotion: *promotion,
@@ -943,7 +942,7 @@ impl Board {
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
                 for promotion in ['Q', 'R', 'B', 'N'].iter() {
-                    moves.push(Promotion {
+                    moves.push(Move::Promotion {
                         from: i - 7,
                         to: i,
                         promotion: *promotion,
@@ -954,10 +953,13 @@ impl Board {
 
         match self.en_passant {
             Some(en_passant) => {
+                
+                // Pawn NE en passant
+
                 pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << en_passant);
 
                 if pawn_moves != 0 && self.white_turn {
-                    moves.push(EnPassant {
+                    moves.push(Move::EnPassant {
                         from: en_passant - 9,
                         to: en_passant,
                         captured: en_passant - 8,
@@ -969,7 +971,7 @@ impl Board {
                 pawn_moves = (self.white_pawns << 7) & !FILE_H & !RANK_1 & (1u64 << en_passant);
 
                 if pawn_moves != 0 && self.white_turn {
-                    moves.push(EnPassant {
+                    moves.push(Move::EnPassant {
                         from: en_passant - 7,
                         to: en_passant,
                         captured: en_passant - 8,
@@ -1435,19 +1437,24 @@ impl Board {
     /// A vector of all castle moves white can make.
     ///
     fn possible_wc(&self) -> Vec<Move> {
-        use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
+        // King side castle
         if self.white_castle_kingside {
             let unsafe_w = self.unsafe_w();
 
+            // Positions
+            // 4 : King's position. Should not be in check.
+            // 5 : Position between king and rook. Should be empty and safe.
+            // 6 : Position between king and rook. Should be empty and safe.
+            // 7 : Rook's position. Should contain a rook.
             if unsafe_w & (1u64 << 4) == 0
                 && (unsafe_w | !self.empty_squares) & 1u64 << 5 == 0
                 && (unsafe_w | !self.empty_squares) & 1u64 << 6 == 0
                 && self.white_rooks & 1u64 << 7 != 0
             {
-                moves.push(Castle {
+                moves.push(Move::Castle {
                     from: 4,
                     to: 6,
                     rook: 7,
@@ -1455,14 +1462,22 @@ impl Board {
             }
         }
 
+        // Queen side castle
         if self.white_castle_queenside {
             let unsafe_w = self.unsafe_w();
+
+            // Positions
+            // 4 : King's position. Should not be in check.
+            // 3 : Position between king and rook. Should be empty and safe.
+            // 2 : Position between king and rook. Should be empty and safe.
+            // 1 : Position between king and rook. Should be empty.
+            // 0 : Rook's position. Should contain a rook.
             if !self.empty_squares & (1u64 << 1) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 3) == 0
                 && unsafe_w & (1u64 << 4) == 0
             {
-                moves.push(Castle {
+                moves.push(Move::Castle {
                     from: 4,
                     to: 2,
                     rook: 0,
@@ -1481,18 +1496,24 @@ impl Board {
     /// A vector of all castle moves black can make.
     ///
     fn possible_bc(&self) -> Vec<Move> {
-        use Move::*;
 
         let mut moves: Vec<Move> = Vec::new();
 
+        // King side castle
         if self.black_castle_kingside {
             let unsafe_b = self.unsafe_b();
+
+            // Positions
+            // 60 : King's position. Should not be in check.
+            // 61 : Position between king and rook. Should be empty and safe.
+            // 62 : Position between king and rook. Should be empty and safe.
+            // 63 : Rook's position. Should contain a rook.
             if unsafe_b & (1u64 << 60) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 61) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 62) == 0
                 && self.black_rooks & (1u64 << 63) != 0
             {
-                moves.push(Castle {
+                moves.push(Move::Castle {
                     from: 60,
                     to: 62,
                     rook: 63,
@@ -1500,15 +1521,23 @@ impl Board {
             }
         }
 
+        // Queen side castle
         if self.black_castle_queenside {
             let unsafe_b = self.unsafe_b();
+
+            // Positions
+            // 60 : King's position. Should not be in check.
+            // 59 : Position between king and rook. Should be empty and safe.
+            // 58 : Position between king and rook. Should be empty and safe.
+            // 57 : Position between king and rook. Should be empty.
+            // 56 : Rook's position. Should contain a rook.
             if self.black_rooks & (1u64 << 56) != 0
                 && !self.empty_squares & (1u64 << 57) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 59) == 0
                 && unsafe_b & (1u64 << 60) == 0
             {
-                moves.push(Castle {
+                moves.push(Move::Castle {
                     from: 60,
                     to: 58,
                     rook: 56,
