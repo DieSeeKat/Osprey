@@ -2,11 +2,14 @@
 
   # Osprey
   
-  ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/DieSeeKat/Osprey/rust.yml)
   ![Static Badge](https://img.shields.io/badge/Lichess_Rating-0-blue)
   ![Static Badge](https://img.shields.io/badge/Version-0.0.4_Development-orange)
-
+  ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/DieSeeKat/Osprey)
   
+  ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/DieSeeKat/Osprey/rust.yml)
+  ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/DieSeeKat/Osprey)
+  ![GitHub language count](https://img.shields.io/github/languages/count/DieSeeKat/Osprey)
+
 </div>
 
 The Osprey chess bot is a free and open source chess engine written in Rust.
