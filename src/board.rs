@@ -1155,9 +1155,10 @@ impl Board {
         if self.white_castle_kingside {
             let unsafe_w = self.unsafe_w();
 
-            if unsafe_w & (1u64 << 4) == 0
-                && (unsafe_w | !self.empty_squares) & (1u64 << 5) == 0
-                && (unsafe_w | !self.empty_squares) & (1u64 << 6) == 0
+            if  unsafe_w & (1u64 << 4) == 0
+                && (unsafe_w | !self.empty_squares) & 1u64 << 5 == 0
+                && (unsafe_w | !self.empty_squares) & 1u64 << 6 == 0
+                && self.white_rooks & 1u64 << 7 != 0
             {
                 moves.push(Castle {
                     from: 4,
@@ -1169,7 +1170,7 @@ impl Board {
 
         if self.white_castle_queenside {
             let unsafe_w = self.unsafe_w();
-            if !self.empty_squares & (1u64 << 1) == 0
+            if  !self.empty_squares & (1u64 << 1) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 2) == 0
                 && (unsafe_w | !self.empty_squares) & (1u64 << 3) == 0
                 && unsafe_w & (1u64 << 4) == 0
@@ -1192,9 +1193,10 @@ impl Board {
 
         if self.black_castle_kingside {
             let unsafe_b = self.unsafe_b();
-            if unsafe_b & (1u64 << 60) == 0
+            if  unsafe_b & (1u64 << 60) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 61) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 62) == 0
+                && self.black_rooks & (1u64 << 63) != 0
             {
                 moves.push(Castle {
                     from: 60,
@@ -1206,7 +1208,8 @@ impl Board {
 
         if self.black_castle_queenside {
             let unsafe_b = self.unsafe_b();
-            if !self.empty_squares & (1u64 << 57) == 0
+            if  self.black_rooks & (1u64 << 56) != 0
+                && !self.empty_squares & (1u64 << 57) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 58) == 0
                 && (unsafe_b | !self.empty_squares) & (1u64 << 59) == 0
                 && unsafe_b & (1u64 << 60) == 0
