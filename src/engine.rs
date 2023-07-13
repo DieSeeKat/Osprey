@@ -1,5 +1,4 @@
 use crate::board::{Board, Move};
-use crate::utils::{draw_bit_board};
 
 struct Osprey {
     board: Board,

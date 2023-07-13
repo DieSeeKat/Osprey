@@ -1,7 +1,11 @@
 [package]
 name = "osprey"
-version = "0.0.4"
+version = "0.1.0"
 edition = "2021"
+authors = ["Lukas Anthonissen"]
+description = "A command line chess engine"
+keywords = ["chess", "engine", "uci"]
+categories = ["games-and-entertainment", "science"]
 
 include = [
     "src/*",
