@@ -3,7 +3,7 @@
   # Osprey
   
   ![Static Badge](https://img.shields.io/badge/Lichess_Rating-0-blue)
-  ![Static Badge](https://img.shields.io/badge/Version-0.0.4_Development-orange)
+  ![Static Badge](https://img.shields.io/badge/Version-0.2.1_Development-orange)
   ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/DieSeeKat/Osprey)
   
   ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/DieSeeKat/Osprey/rust.yml)
