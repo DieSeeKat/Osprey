@@ -76,7 +76,7 @@ const ANTI_DIAGONALS: [u64; 15] = [
 
 ///
 /// The type of a piece.
-/// 
+///
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Piece {
@@ -567,11 +567,7 @@ impl Board {
             Move::Normal { from, to } => (*from, *to),
             Move::Castle { from, to, .. } => (*from, *to),
             Move::EnPassant { from, to, .. } => (*from, *to),
-            Move::Promotion {
-                from,
-                to,
-                ..
-            } => (*from, *to),
+            Move::Promotion { from, to, .. } => (*from, *to),
         };
 
         // en passant
@@ -584,17 +580,29 @@ impl Board {
         }
 
         // castling
-        new_white_castle_queenside = (1u64 << from & self.white_king) != 0 && new_white_castle_queenside;
-        new_white_castle_kingside = (1u64 << from & self.white_king) != 0 && new_white_castle_kingside;
+        new_white_castle_queenside =
+            (1u64 << from & self.white_king) == 0 && new_white_castle_queenside;
+        new_white_castle_kingside =
+            (1u64 << from & self.white_king) == 0 && new_white_castle_kingside;
 
-        new_black_castle_queenside = (1u64 << from & self.black_king) != 0 && new_black_castle_queenside;
-        new_black_castle_kingside = (1u64 << from & self.black_king) != 0 && new_black_castle_kingside;
+        new_black_castle_queenside =
+            (1u64 << from & self.black_king) == 0 && new_black_castle_queenside;
+        new_black_castle_kingside =
+            (1u64 << from & self.black_king) == 0 && new_black_castle_kingside;
 
-        new_white_castle_queenside = ((1u64 << from | 1u64 << to) & self.white_rooks & (1u64 << 0)) != 0 && new_white_castle_queenside;
-        new_white_castle_kingside = ((1u64 << from | 1u64 << to) & self.white_rooks & 1u64 << 7) != 0 && new_white_castle_kingside;
+        new_white_castle_queenside = ((1u64 << from | 1u64 << to) & self.white_rooks & (1u64 << 0))
+            == 0
+            && new_white_castle_queenside;
+        new_white_castle_kingside = ((1u64 << from | 1u64 << to) & self.white_rooks & 1u64 << 7)
+            == 0
+            && new_white_castle_kingside;
 
-        new_black_castle_queenside = ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 56)) != 0 && new_black_castle_queenside;
-        new_black_castle_kingside = ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63)) != 0 && new_black_castle_kingside;
+        new_black_castle_queenside =
+            ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 56)) == 0
+                && new_black_castle_queenside;
+        new_black_castle_kingside = ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63))
+            == 0
+            && new_black_castle_kingside;
 
         // set white and black pieces
         let new_white_pieces = new_white_pawns
@@ -646,11 +654,10 @@ impl Board {
         {
             // return new board
             return Ok(new_board);
-        } 
+        }
 
         // return old board with error
         return Err(self.clone());
-        
     }
 
     ///
@@ -870,61 +877,45 @@ impl Board {
     /// A vector of all pseudo-legal pawn moves white can make.
     ///
     fn possible_wp(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
-        // Pawn NE captures
-
-        let mut pawn_moves =
-            (self.white_pawns << 9) & !FILE_A & self.black_pieces & NOT_RANK_1_8;
+        let pawn_ne_captures = (self.white_pawns << 9) & !FILE_A & self.black_pieces & NOT_RANK_1_8;
+        let pawn_nw_captures = (self.white_pawns << 7) & !FILE_H & self.black_pieces & NOT_RANK_1_8;
+        let pawn_forward_one = (self.white_pawns << 8) & self.empty_squares & NOT_RANK_1_8;
+        let pawn_forward_two = (pawn_forward_one << 8)
+            & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & NOT_RANK_1_2);
+        let pawn_promotion = (self.white_pawns << 8) & self.empty_squares & RANK_8;
+        let pawn_promotion_ne_captures =
+            (self.white_pawns << 9) & !FILE_A & self.black_pieces & RANK_8;
+        let pawn_promotion_nw_captures =
+            (self.white_pawns << 7) & !FILE_H & self.black_pieces & RANK_8;
 
         for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            let this = 1u64 << i;
+            if pawn_ne_captures & this != 0 {
                 moves.push(Move::Normal { from: i - 9, to: i });
             }
-        }
-
-        // Pawn NW captures
-
-        pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & NOT_RANK_1_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            if pawn_nw_captures & this != 0 {
                 moves.push(Move::Normal { from: i - 7, to: i });
             }
-        }
-
-        // Pawn forward one
-
-        pawn_moves = (self.white_pawns << 8) & self.empty_squares & NOT_RANK_1_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            if pawn_forward_one & this != 0 {
                 moves.push(Move::Normal { from: i - 8, to: i });
             }
-        }
-
-        // Pawn forward two
-
-        pawn_moves = (pawn_moves << 8)
-            & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & NOT_RANK_1_2);
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            if pawn_forward_two & this != 0 {
                 moves.push(Move::Normal {
                     from: i - 16,
                     to: i,
                 });
             }
-        }
-
-        // Pawn Promotion
-
-        pawn_moves = (self.white_pawns << 8) & self.empty_squares & RANK_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
+            if pawn_promotion & this != 0 {
+                for promotion in [
+                    Piece::WhiteBishop,
+                    Piece::WhiteKnight,
+                    Piece::WhiteRook,
+                    Piece::WhiteQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
                         from: i - 8,
                         to: i,
@@ -932,15 +923,15 @@ impl Board {
                     });
                 }
             }
-        }
-
-        // Pawn Promotion NE captures
-
-        pawn_moves = (self.white_pawns << 9) & !FILE_A & self.black_pieces & RANK_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
+            if pawn_promotion_ne_captures & this != 0 {
+                for promotion in [
+                    Piece::WhiteBishop,
+                    Piece::WhiteKnight,
+                    Piece::WhiteRook,
+                    Piece::WhiteQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
                         from: i - 9,
                         to: i,
@@ -948,15 +939,15 @@ impl Board {
                     });
                 }
             }
-        }
-
-        // Pawn Promotion NW captures
-
-        pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & RANK_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::WhiteBishop, Piece::WhiteKnight, Piece::WhiteRook, Piece::WhiteQueen].iter() {
+            if pawn_promotion_nw_captures & this != 0 {
+                for promotion in [
+                    Piece::WhiteBishop,
+                    Piece::WhiteKnight,
+                    Piece::WhiteRook,
+                    Piece::WhiteQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
                         from: i - 7,
                         to: i,
@@ -968,10 +959,10 @@ impl Board {
 
         match self.en_passant {
             Some(en_passant) => {
-
                 // Pawn NE en passant
 
-                pawn_moves = (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << en_passant);
+                let mut pawn_moves =
+                    (self.white_pawns << 9) & !FILE_A & !RANK_1 & (1u64 << en_passant);
 
                 if pawn_moves != 0 && self.white_turn {
                     moves.push(Move::EnPassant {
@@ -1006,7 +997,6 @@ impl Board {
     ///
     /// A vector of all pseudo-legal knight moves white can make.
     fn possible_wn(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         for i in 0..64 {
@@ -1121,7 +1111,6 @@ impl Board {
     /// A vector of all pseudo-legal king moves white can make.
     ///
     fn possible_wk(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         for i in 0..64 {
@@ -1161,61 +1150,45 @@ impl Board {
     /// A vector of all pseudo-legal pawn moves black can make.
     ///
     fn possible_bp(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
-        // Pawn SW captures
-
-        let mut pawn_moves =
-            (self.black_pawns >> 9) & !FILE_H & self.white_pieces & NOT_RANK_1_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                moves.push(Move::Normal { from: i + 9, to: i });
-            }
-        }
-
-        // Pawn SE captures
-
-        pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & NOT_RANK_1_8;
+        let pawn_se_captures = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & NOT_RANK_1_8;
+        let pawn_sw_captures = (self.black_pawns >> 9) & !FILE_H & self.white_pieces & NOT_RANK_1_8;
+        let pawn_forward_one = (self.black_pawns >> 8) & self.empty_squares & NOT_RANK_1_8;
+        let pawn_forward_two = (pawn_forward_one >> 8)
+            & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & NOT_RANK_7_8);
+        let pawn_promotion = (self.black_pawns >> 8) & self.empty_squares & RANK_1;
+        let pawn_promotion_se_captures =
+            (self.black_pawns >> 7) & !FILE_A & self.white_pieces & RANK_1;
+        let pawn_promotion_sw_captures =
+            (self.black_pawns >> 9) & !FILE_H & self.white_pieces & RANK_1;
 
         for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            let this = 1u64 << i;
+            if pawn_se_captures & this != 0 {
                 moves.push(Move::Normal { from: i + 7, to: i });
             }
-        }
-
-        // Pawn forward one
-
-        pawn_moves = (self.black_pawns >> 8) & self.empty_squares & NOT_RANK_1_8;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            if pawn_sw_captures & this != 0 {
+                moves.push(Move::Normal { from: i + 9, to: i });
+            }
+            if pawn_forward_one & this != 0 {
                 moves.push(Move::Normal { from: i + 8, to: i });
             }
-        }
-
-        // Pawn forward two
-
-        pawn_moves = (pawn_moves >> 8)
-            & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & NOT_RANK_7_8);
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
+            if pawn_forward_two & this != 0 {
                 moves.push(Move::Normal {
                     from: i + 16,
                     to: i,
                 });
             }
-        }
-
-        // Pawn Promotion
-
-        pawn_moves = (self.black_pawns >> 8) & self.empty_squares & RANK_1;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
+            if pawn_promotion & this != 0 {
+                for promotion in [
+                    Piece::BlackBishop,
+                    Piece::BlackKnight,
+                    Piece::BlackRook,
+                    Piece::BlackQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
                         from: i + 8,
                         to: i,
@@ -1223,33 +1196,33 @@ impl Board {
                     });
                 }
             }
-        }
-
-        // Pawn Promotion SW captures
-
-        pawn_moves = (self.black_pawns >> 9) & !FILE_H & self.white_pieces & RANK_1;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
+            if pawn_promotion_se_captures & this != 0 {
+                for promotion in [
+                    Piece::BlackBishop,
+                    Piece::BlackKnight,
+                    Piece::BlackRook,
+                    Piece::BlackQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
-                        from: i + 9,
+                        from: i + 7,
                         to: i,
                         promotion: *promotion,
                     });
                 }
             }
-        }
-
-        // Pawn Promotion SE captures
-
-        pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & RANK_1;
-
-        for i in 0..64 {
-            if pawn_moves & (1u64 << i) != 0 {
-                for promotion in [Piece::BlackBishop, Piece::BlackKnight, Piece::BlackRook, Piece::BlackQueen].iter() {
+            if pawn_promotion_sw_captures & this != 0 {
+                for promotion in [
+                    Piece::BlackBishop,
+                    Piece::BlackKnight,
+                    Piece::BlackRook,
+                    Piece::BlackQueen,
+                ]
+                .iter()
+                {
                     moves.push(Move::Promotion {
-                        from: i + 7,
+                        from: i + 9,
                         to: i,
                         promotion: *promotion,
                     });
@@ -1261,7 +1234,7 @@ impl Board {
             Some(en_passant) => {
                 // Pawn SW en passant
 
-                pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << en_passant);
+                let mut pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << en_passant);
 
                 if pawn_moves != 0 && !self.white_turn {
                     moves.push(Move::EnPassant {
@@ -1297,7 +1270,6 @@ impl Board {
     /// A vector of all pseudo-legal knight moves black can make.
     ///
     fn possible_bn(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         for i in 0..64 {
@@ -1412,7 +1384,6 @@ impl Board {
     /// A vector of all pseudo-legal king moves black can make.
     ///
     fn possible_bk(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         for i in 0..64 {
@@ -1452,7 +1423,6 @@ impl Board {
     /// A vector of all castle moves white can make.
     ///
     fn possible_wc(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         // King side castle
@@ -1511,7 +1481,6 @@ impl Board {
     /// A vector of all castle moves black can make.
     ///
     fn possible_bc(&self) -> Vec<Move> {
-
         let mut moves: Vec<Move> = Vec::new();
 
         // King side castle
