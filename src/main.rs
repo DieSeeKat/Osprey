@@ -25,6 +25,10 @@ enum Command {
         depth: u8,
         #[clap(short, long)]
         num_threads: Option<u8>,
+        #[clap(short, long)]
+        auto_threads: bool,
+        #[clap(short, long)]
+        benchmark: bool,
     },
 }
 
@@ -37,13 +41,25 @@ fn main() {
             fen_string,
             depth,
             num_threads,
+            auto_threads,
+            benchmark,
         } => {
             let num_threads = match num_threads {
                 Some(num_threads) => num_threads,
-                None => match available_parallelism() {
-                    Ok(num_threads) => num_threads.get() as u8 - 1,
-                    Err(_) => 1,
-                },
+                None => {
+                    let threads = if auto_threads {
+                        match available_parallelism() {
+                            Ok(num_threads) => num_threads.get() as u8 - 1,
+                            Err(_) => 1,
+                        }
+                    } else {
+                        1
+                    };
+
+                    println!("Using {} threads", threads);
+
+                    threads
+                }
             };
 
             // Construct the Board
@@ -89,10 +105,20 @@ fn main() {
             println!("====Perft Results===");
             println!("-----------------");
             println!("Nodes: {}", nodes);
-            println!("Time: {:?}", duration);
-            println!("Nodes per second: {}", nodes as f64 / duration.as_secs_f64());
-            println!("Nodes per second per thread: {}", nodes as f64 / duration.as_secs_f64() / num_threads as f64);
             println!("-----------------");
+
+            if benchmark {
+                println!("Time: {:?}", duration);
+                println!(
+                    "Nodes per second: {}",
+                    nodes as f64 / duration.as_secs_f64()
+                );
+                println!(
+                    "Nodes per second per thread: {}",
+                    nodes as f64 / duration.as_secs_f64() / num_threads as f64
+                );
+                println!("-----------------");
+            }
         }
     }
 }
