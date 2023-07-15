@@ -48,4 +48,4 @@ After a Rust compiler is installed, compilation of the engine is easy:
 
 ## Contributing
 
-Osprey is an in-development engine, being developed by a small team (me). Any contribution bt pull request is welcome on the dev branch.
+Osprey is an in-development engine, being developed by a small team (me). Any contribution is welcome on the dev branch.
