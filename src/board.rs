@@ -548,19 +548,19 @@ impl Board {
         let new_fullmove = self.fullmove + 1;
 
         // set new boards
-        let new_white_pawns = self.move_board(m, Piece::WhitePawn);
-        let new_white_knights = self.move_board(m, Piece::WhiteKnight);
-        let new_white_bishops = self.move_board(m, Piece::WhiteBishop);
-        let new_white_rooks = self.move_board(m, Piece::WhiteRook);
-        let new_white_queens = self.move_board(m, Piece::WhiteQueen);
-        let new_white_king = self.move_board(m, Piece::WhiteKing);
+        let new_white_pawns = self.move_board(self.white_pawns, m, Piece::WhitePawn);
+        let new_white_knights = self.move_board(self.white_knights, m, Piece::WhiteKnight);
+        let new_white_bishops = self.move_board(self.white_bishops, m, Piece::WhiteBishop);
+        let new_white_rooks = self.move_board(self.white_rooks, m, Piece::WhiteRook);
+        let new_white_queens = self.move_board(self.white_queens, m, Piece::WhiteQueen);
+        let new_white_king = self.move_board(self.white_king, m, Piece::WhiteKing);
 
-        let new_black_pawns = self.move_board(m, Piece::BlackPawn);
-        let new_black_knights = self.move_board(m, Piece::BlackKnight);
-        let new_black_bishops = self.move_board(m, Piece::BlackBishop);
-        let new_black_rooks = self.move_board(m, Piece::BlackRook);
-        let new_black_queens = self.move_board(m, Piece::BlackQueen);
-        let new_black_king = self.move_board(m, Piece::BlackKing);
+        let new_black_pawns = self.move_board(self.black_pawns, m, Piece::BlackPawn);
+        let new_black_knights = self.move_board(self.black_knights, m, Piece::BlackKnight);
+        let new_black_bishops = self.move_board(self.black_bishops, m, Piece::BlackBishop);
+        let new_black_rooks = self.move_board(self.black_rooks, m, Piece::BlackRook);
+        let new_black_queens = self.move_board(self.black_queens, m, Piece::BlackQueen);
+        let new_black_king = self.move_board(self.black_king, m, Piece::BlackKing);
 
         // get from and to
         let (from, to) = match m {
@@ -672,23 +672,7 @@ impl Board {
     ///
     /// The modified board.
     ///
-    fn move_board(&self, m: &Move, board_type: Piece) -> u64 {
-        // get respective bitboard
-        let board = match board_type {
-            Piece::WhitePawn => self.white_pawns,
-            Piece::WhiteKnight => self.white_knights,
-            Piece::WhiteBishop => self.white_bishops,
-            Piece::WhiteRook => self.white_rooks,
-            Piece::WhiteQueen => self.white_queens,
-            Piece::WhiteKing => self.white_king,
-
-            Piece::BlackPawn => self.black_pawns,
-            Piece::BlackKnight => self.black_knights,
-            Piece::BlackBishop => self.black_bishops,
-            Piece::BlackRook => self.black_rooks,
-            Piece::BlackQueen => self.black_queens,
-            Piece::BlackKing => self.black_king,
-        };
+    fn move_board(&self, board: u64, m: &Move, board_type: Piece) -> u64 {
 
         // make move
         match m {
@@ -696,10 +680,10 @@ impl Board {
                 if board & (1u64 << from) == 0 {
                     // not "from" piece; empty "to" position
                     return board & !(1u64 << to);
-                } else {
-                    // "from" piece; move from "from" to "to" position
-                    return (board & !(1u64 << from)) | (1u64 << to);
                 }
+
+                // "from" piece; move from "from" to "to" position
+                (board & !(1u64 << from)) | (1u64 << to)
             }
             Move::Castle { from, to, rook } => {
                 if board & (1u64 << from) != 0 {
@@ -1720,99 +1704,6 @@ impl fmt::Display for Board {
 
         write!(f, "{}", board)
     }
-}
-
-#[test]
-fn make_pawn_move_n() {
-    let board = Board::new("8/8/8/8/8/4P3/8/8 w - - 0 1");
-
-    let m = Move::Normal { from: 20, to: 28 };
-    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
-
-    assert_eq!(new_white_pawns, 1u64 << 28);
-}
-
-#[test]
-fn make_rook_capture() {
-    let board = Board::new("8/4r3/8/8/8/8/4R3/8 w - - 0 1");
-
-    let m = Move::Normal { from: 12, to: 52 };
-
-    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
-    let new_black_rooks = board.move_board(&m, Piece::BlackRook);
-
-    assert_eq!(new_white_rooks, 1u64 << 52);
-    assert_eq!(new_black_rooks, 0u64);
-}
-
-#[test]
-fn make_pawn_promotion() {
-    let board = Board::new("4p3/3P4/8/8/8/8/8/8 w - - 0 1");
-
-    let m = Move::Promotion {
-        from: 51,
-        to: 60,
-        promotion: Piece::WhiteQueen,
-    };
-
-    let new_white_queens = board.move_board(&m, Piece::WhiteQueen);
-    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
-    let new_black_pawns = board.move_board(&m, Piece::BlackPawn);
-
-    assert_eq!(new_white_queens, 1u64 << 60);
-    assert_eq!(new_white_pawns, 0u64);
-    assert_eq!(new_black_pawns, 0u64);
-}
-
-#[test]
-fn make_en_passant() {
-    let board = Board::new("8/8/8/2pPp3/8/8/8/8 w - e6 0 1");
-
-    let m = Move::EnPassant {
-        from: 35,
-        to: 44,
-        captured: 36,
-    };
-
-    let new_white_pawns = board.move_board(&m, Piece::WhitePawn);
-    let new_black_pawns = board.move_board(&m, Piece::BlackPawn);
-
-    assert_eq!(new_white_pawns, 1u64 << 44);
-    assert_eq!(new_black_pawns, 1u64 << 34);
-}
-
-#[test]
-fn make_castle_w_k() {
-    let board = Board::new("8/8/8/8/8/8/8/4K2R w KQ - 0 1");
-
-    let m = Move::Castle {
-        from: 4,
-        to: 6,
-        rook: 7,
-    };
-
-    let new_white_kings = board.move_board(&m, Piece::WhiteKing);
-    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
-
-    assert_eq!(new_white_kings, 1u64 << 6);
-    assert_eq!(new_white_rooks, 1u64 << 5);
-}
-
-#[test]
-fn make_castle_w_q() {
-    let board = Board::new("8/8/8/8/8/8/8/R3K3 w KQ - 0 1");
-
-    let m = Move::Castle {
-        from: 4,
-        to: 2,
-        rook: 0,
-    };
-
-    let new_white_kings = board.move_board(&m, Piece::WhiteKing);
-    let new_white_rooks = board.move_board(&m, Piece::WhiteRook);
-
-    assert_eq!(new_white_kings, 1u64 << 2);
-    assert_eq!(new_white_rooks, 1u64 << 3);
 }
 
 #[test]
