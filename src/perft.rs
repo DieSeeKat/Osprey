@@ -17,11 +17,9 @@ pub fn perft(board: &Board, depth: u8, max_depth: u8, num_threads: u8) -> u64 {
     };
 
     let chunks = moves.chunks(moves.len() / num_threads as usize);
-    let result = Arc::new(Mutex::new(HashMap::new()));
     let mut handles: Vec<_> = Vec::new();
 
     for chunk in chunks {
-        let result = Arc::clone(&result);
         let my_board = board.clone();
         let my_chunk: Vec<Move> = chunk.iter().map(|m| (*m).clone()).collect();
 
@@ -38,19 +36,14 @@ pub fn perft(board: &Board, depth: u8, max_depth: u8, num_threads: u8) -> u64 {
                 }
             }
 
-            let mut result = result.lock().unwrap();
-            result.insert(thread::current().id(), nodes);
+            return nodes;
         });
 
         handles.push(handle);
     }
 
     for handle in handles {
-        handle.join().unwrap();
-    }
-
-    for (_, value) in result.lock().unwrap().iter() {
-        nodes += value;
+        nodes += handle.join().unwrap();
     }
 
     nodes

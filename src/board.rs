@@ -17,6 +17,10 @@ const RANK_6: u64 = 280375465082880;
 const RANK_7: u64 = 71776119061217280;
 const RANK_8: u64 = 18374686479671623680;
 
+const NOT_RANK_1_8: u64 = !(RANK_1 | RANK_8);
+const NOT_RANK_1_2: u64 = !(RANK_1 | RANK_2);
+const NOT_RANK_7_8: u64 = !(RANK_7 | RANK_8);
+
 // Left here for later use
 // const CENTER: u64 = 103481868288;
 // const EXTENDED_CENTER: u64 = 66229406269440;
@@ -580,25 +584,17 @@ impl Board {
         }
 
         // castling
-        if (1u64 << from & self.white_king) != 0 {
-            new_white_castle_kingside = false;
-            new_white_castle_queenside = false;
-        } else if (1u64 << from & self.black_king) != 0 {
-            new_black_castle_kingside = false;
-            new_black_castle_queenside = false;
-        }
+        new_white_castle_queenside = (1u64 << from & self.white_king) != 0 && new_white_castle_queenside;
+        new_white_castle_kingside = (1u64 << from & self.white_king) != 0 && new_white_castle_kingside;
 
-        if ((1u64 << from | 1u64 << to) & self.white_rooks & (1u64 << 0)) != 0 {
-            new_white_castle_queenside = false;
-        } else if ((1u64 << from | 1u64 << to) & self.white_rooks & 1u64 << 7) != 0 {
-            new_white_castle_kingside = false;
-        }
+        new_black_castle_queenside = (1u64 << from & self.black_king) != 0 && new_black_castle_queenside;
+        new_black_castle_kingside = (1u64 << from & self.black_king) != 0 && new_black_castle_kingside;
 
-        if ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 56)) != 0 {
-            new_black_castle_queenside = false;
-        } else if ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63)) != 0 {
-            new_black_castle_kingside = false;
-        }
+        new_white_castle_queenside = ((1u64 << from | 1u64 << to) & self.white_rooks & (1u64 << 0)) != 0 && new_white_castle_queenside;
+        new_white_castle_kingside = ((1u64 << from | 1u64 << to) & self.white_rooks & 1u64 << 7) != 0 && new_white_castle_kingside;
+
+        new_black_castle_queenside = ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 56)) != 0 && new_black_castle_queenside;
+        new_black_castle_kingside = ((1u64 << from | 1u64 << to) & self.black_rooks & (1u64 << 63)) != 0 && new_black_castle_kingside;
 
         // set white and black pieces
         let new_white_pieces = new_white_pawns
@@ -650,10 +646,11 @@ impl Board {
         {
             // return new board
             return Ok(new_board);
-        } else {
-            // return old board with error
-            return Err(self.clone());
-        }
+        } 
+
+        // return old board with error
+        return Err(self.clone());
+        
     }
 
     ///
@@ -879,7 +876,7 @@ impl Board {
         // Pawn NE captures
 
         let mut pawn_moves =
-            (self.white_pawns << 9) & !FILE_A & self.black_pieces & !RANK_1 & !RANK_8;
+            (self.white_pawns << 9) & !FILE_A & self.black_pieces & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -889,7 +886,7 @@ impl Board {
 
         // Pawn NW captures
 
-        pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & !RANK_1 & !RANK_8;
+        pawn_moves = (self.white_pawns << 7) & !FILE_H & self.black_pieces & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -899,7 +896,7 @@ impl Board {
 
         // Pawn forward one
 
-        pawn_moves = (self.white_pawns << 8) & self.empty_squares & !RANK_1 & !RANK_8;
+        pawn_moves = (self.white_pawns << 8) & self.empty_squares & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -910,7 +907,7 @@ impl Board {
         // Pawn forward two
 
         pawn_moves = (pawn_moves << 8)
-            & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & !RANK_1 & !RANK_2);
+            & ((self.white_pawns & RANK_2) << 16 & self.empty_squares & NOT_RANK_1_2);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -1170,7 +1167,7 @@ impl Board {
         // Pawn SW captures
 
         let mut pawn_moves =
-            (self.black_pawns >> 9) & !FILE_H & self.white_pieces & !RANK_8 & !RANK_1;
+            (self.black_pawns >> 9) & !FILE_H & self.white_pieces & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -1180,7 +1177,7 @@ impl Board {
 
         // Pawn SE captures
 
-        pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & !RANK_8 & !RANK_1;
+        pawn_moves = (self.black_pawns >> 7) & !FILE_A & self.white_pieces & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -1190,7 +1187,7 @@ impl Board {
 
         // Pawn forward one
 
-        pawn_moves = (self.black_pawns >> 8) & self.empty_squares & !RANK_8 & !RANK_1;
+        pawn_moves = (self.black_pawns >> 8) & self.empty_squares & NOT_RANK_1_8;
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {
@@ -1201,7 +1198,7 @@ impl Board {
         // Pawn forward two
 
         pawn_moves = (pawn_moves >> 8)
-            & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & !RANK_8 & !RANK_7);
+            & ((self.black_pawns & RANK_7) >> 16 & self.empty_squares & NOT_RANK_7_8);
 
         for i in 0..64 {
             if pawn_moves & (1u64 << i) != 0 {

@@ -19,3 +19,6 @@ include = [
 
 [dependencies]
 clap = { version = "4.2.2", features = ["derive"] }
+
+[profile.dev]
+opt-level = 3
