@@ -92,7 +92,7 @@ pub enum Piece {
 
 /// A move of a piece on the board.
 #[allow(dead_code)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Move {
     ///
     /// A Move::Normal move.
