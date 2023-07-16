@@ -1,7 +1,5 @@
 use crate::board::{Board, Move};
 use std::thread;
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 
 pub fn perft(board: &Board, depth: u8, max_depth: u8, num_threads: u8) -> u64 {
     if depth == max_depth {

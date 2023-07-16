@@ -673,7 +673,6 @@ impl Board {
     /// The modified board.
     ///
     fn move_board(&self, board: u64, m: &Move, board_type: Piece) -> u64 {
-
         // make move
         match m {
             Move::Normal { from, to } => {
@@ -759,7 +758,7 @@ impl Board {
     ///
     /// A bitboard representing the possible positions.
     ///
-    fn possible_hv(&self, position: u8) -> u64 {
+    const fn possible_hv(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
 
@@ -789,7 +788,7 @@ impl Board {
     ///
     /// A bitboard representing the possible positions.
     ///
-    fn possible_da(&self, position: u8) -> u64 {
+    const fn possible_da(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
 
@@ -1218,7 +1217,8 @@ impl Board {
             Some(en_passant) => {
                 // Pawn SW en passant
 
-                let mut pawn_moves = (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << en_passant);
+                let mut pawn_moves =
+                    (self.black_pawns >> 9) & !FILE_H & !RANK_8 & (1u64 << en_passant);
 
                 if pawn_moves != 0 && !self.white_turn {
                     moves.push(Move::EnPassant {
