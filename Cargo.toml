@@ -1,6 +1,6 @@
 [package]
 name = "osprey"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Lukas Anthonissen"]
 description = "A command line chess engine"
@@ -22,3 +22,8 @@ clap = { version = "4.2.2", features = ["derive"] }
 
 [profile.dev]
 opt-level = 3
+
+[lib]
+name = "osprey"
+path = "src/lib.rs"
+doctest = true

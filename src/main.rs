@@ -1,12 +1,9 @@
 #![crate_name = "osprey"]
 
-use crate::board::Board;
-use crate::perft::perft;
 use clap::{Parser, Subcommand};
 use std::thread::available_parallelism;
 
-mod board;
-mod perft;
+use osprey::{Board, Perft};
 
 #[derive(Parser)]
 struct App {
@@ -99,7 +96,7 @@ fn main() {
 
             // Run the perft
             let start = std::time::Instant::now();
-            let nodes = perft(&start_board, 0, depth, num_threads);
+            let nodes = Perft::perft(&start_board, 0, depth, num_threads);
             let duration = start.elapsed();
 
             println!("====Perft Results===");
