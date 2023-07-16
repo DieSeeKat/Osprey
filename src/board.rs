@@ -536,6 +536,7 @@ impl Board {
     ///
     /// A new board if the move is legal, otherwise the old board.
     ///
+    #[inline]
     pub fn make_move(&self, m: &Move) -> Result<Board, Board> {
         // initialize meta data
         let mut new_en_passant = None;
@@ -672,6 +673,7 @@ impl Board {
     ///
     /// The modified board.
     ///
+    #[inline]
     fn move_board(&self, board: u64, m: &Move, board_type: Piece) -> u64 {
         // make move
         match m {
@@ -758,6 +760,7 @@ impl Board {
     ///
     /// A bitboard representing the possible positions.
     ///
+    #[inline]
     const fn possible_hv(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
@@ -788,6 +791,7 @@ impl Board {
     ///
     /// A bitboard representing the possible positions.
     ///
+    #[inline]
     const fn possible_da(&self, position: u8) -> u64 {
         let slider = 1u64 << position;
         let occupied = !self.empty_squares;
@@ -817,6 +821,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal moves white can make.
     ///
+    #[inline]
     pub fn possible_white(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -838,6 +843,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal moves black can make.
     ///
+    #[inline]
     pub fn possible_black(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -859,6 +865,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal pawn moves white can make.
     ///
+    #[inline]
     fn possible_wp(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -979,6 +986,7 @@ impl Board {
     /// # Returns
     ///
     /// A vector of all pseudo-legal knight moves white can make.
+    #[inline]
     fn possible_wn(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1016,6 +1024,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal bishop moves white can make.
     ///
+    #[inline]
     fn possible_wb(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1041,6 +1050,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal rook moves white can make.
     ///     
+    #[inline]
     fn possible_wr(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1066,6 +1076,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal queen moves white can make.
     ///
+    #[inline]
     fn possible_wq(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1093,6 +1104,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal king moves white can make.
     ///
+    #[inline]
     fn possible_wk(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1112,8 +1124,10 @@ impl Board {
                     possibility &= !(FILE_A | FILE_B) & !self.white_pieces;
                 }
 
+                let safe_white = !self.unsafe_w();
+
                 for j in 0..64 {
-                    if possibility & 1u64 << j != 0 {
+                    if possibility & 1u64 << j & safe_white != 0 {
                         moves.push(Move::Normal { from: i, to: j });
                     }
                 }
@@ -1132,6 +1146,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal pawn moves black can make.
     ///
+    #[inline]
     fn possible_bp(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1253,6 +1268,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal knight moves black can make.
     ///
+    #[inline]
     fn possible_bn(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1290,6 +1306,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal bishop moves black can make.
     ///
+    #[inline]
     fn possible_bb(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1315,6 +1332,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal rook moves black can make.
     ///
+    #[inline]
     fn possible_br(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1340,6 +1358,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal queen moves black can make.
     ///
+    #[inline]
     fn possible_bq(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1367,6 +1386,7 @@ impl Board {
     ///
     /// A vector of all pseudo-legal king moves black can make.
     ///
+    #[inline]
     fn possible_bk(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1386,8 +1406,10 @@ impl Board {
                     possibility &= !(FILE_A | FILE_B) & !self.black_pieces;
                 }
 
+                let safe_black = !self.unsafe_b();
+
                 for j in 0..64 {
-                    if possibility & 1u64 << j != 0 {
+                    if possibility & 1u64 << j & safe_black != 0 {
                         moves.push(Move::Normal { from: i, to: j });
                     }
                 }
@@ -1406,6 +1428,7 @@ impl Board {
     ///
     /// A vector of all castle moves white can make.
     ///
+    #[inline]
     fn possible_wc(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1464,6 +1487,7 @@ impl Board {
     ///
     /// A vector of all castle moves black can make.
     ///
+    #[inline]
     fn possible_bc(&self) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
@@ -1523,6 +1547,7 @@ impl Board {
     ///
     /// A bitboard representing all squares attacked by black.
     ///
+    #[inline]
     fn unsafe_w(&self) -> u64 {
         let mut unsafe_squares: u64 = 0;
 
@@ -1604,6 +1629,7 @@ impl Board {
     ///
     /// A bitboard representing all squares attacked by white.
     ///
+    #[inline]
     fn unsafe_b(&self) -> u64 {
         let mut unsafe_squares: u64 = 0;
 
