@@ -1,4 +1,4 @@
-use super::{Board, PieceColor};
+use super::{Board, Move};
 
 const FILE_A: u64 = 72340172838076673;
 const FILE_B: u64 = 144680345676153346;
@@ -78,8 +78,16 @@ pub struct Movegen {}
 
 impl Movegen {
     #[inline]
-    pub fn generate_moves(board: &Board) -> MoveList {}
+    pub fn generate_moves(board: &Board) -> Vec<Move> {
+        let mut moves = Vec::new();
+
+        moves
+    }
 
     #[inline]
-    fn pawn_move() -> MoveList {}
+    fn pawn_move() -> Vec<Move> {
+        let mut moves = Vec::new();
+
+        moves
+    }
 }
