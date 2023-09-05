@@ -26,7 +26,6 @@ impl Perft {
 
             let handle = thread::spawn(move || {
                 let mut nodes = 0;
-
                 for m in my_chunk {
                     match my_board.make_move(&m) {
                         Ok(new_board) => {
