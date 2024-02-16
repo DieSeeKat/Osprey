@@ -1,4 +1,4 @@
-use super::{Board, Move, Piece};
+use crate::board::{Board, Move, Piece};
 
 const FILE_A: u64 = 72340172838076673;
 const FILE_B: u64 = 144680345676153346;
@@ -74,9 +74,9 @@ const ANTI_DIAGONALS: [u64; 15] = [
     0x100000000000000,
 ];
 
-pub struct Movegen {}
+pub struct MoveService {}
 
-impl Movegen {
+impl MoveService {
     
     ///
     /// Get all pseudo-legal moves (without worrying about check) white can make.
@@ -89,13 +89,13 @@ impl Movegen {
     pub fn possible_white(board: &Board) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
-        moves.append(&mut Movegen::possible_wp(board));
-        moves.append(&mut Movegen::possible_wk(board));
-        moves.append(&mut Movegen::possible_wq(board));
-        moves.append(&mut Movegen::possible_wr(board));
-        moves.append(&mut Movegen::possible_wb(board));
-        moves.append(&mut Movegen::possible_wn(board));
-        moves.append(&mut Movegen::possible_wc(board));
+        moves.append(&mut MoveService::possible_wp(board));
+        moves.append(&mut MoveService::possible_wk(board));
+        moves.append(&mut MoveService::possible_wq(board));
+        moves.append(&mut MoveService::possible_wr(board));
+        moves.append(&mut MoveService::possible_wb(board));
+        moves.append(&mut MoveService::possible_wn(board));
+        moves.append(&mut MoveService::possible_wc(board));
 
         moves
     }
@@ -111,13 +111,13 @@ impl Movegen {
     pub fn possible_black(board: &Board) -> Vec<Move> {
         let mut moves: Vec<Move> = Vec::new();
 
-        moves.append(&mut Movegen::possible_bp(board));
-        moves.append(&mut Movegen::possible_bk(board));
-        moves.append(&mut Movegen::possible_bq(board));
-        moves.append(&mut Movegen::possible_br(board));
-        moves.append(&mut Movegen::possible_bb(board));
-        moves.append(&mut Movegen::possible_bn(board));
-        moves.append(&mut Movegen::possible_bc(board));
+        moves.append(&mut MoveService::possible_bp(board));
+        moves.append(&mut MoveService::possible_bk(board));
+        moves.append(&mut MoveService::possible_bq(board));
+        moves.append(&mut MoveService::possible_br(board));
+        moves.append(&mut MoveService::possible_bb(board));
+        moves.append(&mut MoveService::possible_bn(board));
+        moves.append(&mut MoveService::possible_bc(board));
 
         moves
     }
@@ -365,7 +365,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.white_bishops & (1u64 << i) != 0 {
-                let bishop_moves = Movegen::possible_da(board, i) & !board.white_pieces & !board.white_king;
+                let bishop_moves = MoveService::possible_da(board, i) & !board.white_pieces & !board.white_king;
 
                 for j in 0..64 {
                     if bishop_moves & (1u64 << j) != 0 {
@@ -391,7 +391,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.white_rooks & (1u64 << i) != 0 {
-                let rook_moves = Movegen::possible_hv(board, i) & !board.white_pieces & !board.white_king;
+                let rook_moves = MoveService::possible_hv(board, i) & !board.white_pieces & !board.white_king;
 
                 for j in 0..64 {
                     if rook_moves & (1u64 << j) != 0 {
@@ -417,7 +417,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.white_queens & (1u64 << i) != 0 {
-                let queen_moves = (Movegen::possible_hv(board, i) | Movegen::possible_da(board, i))
+                let queen_moves = (MoveService::possible_hv(board, i) | MoveService::possible_da(board, i))
                     & !board.white_pieces
                     & !board.white_king;
 
@@ -459,7 +459,7 @@ impl Movegen {
                     possibility &= !(FILE_A | FILE_B) & !board.white_pieces;
                 }
 
-                let safe_white = !Movegen::unsafe_w(board);
+                let safe_white = !MoveService::unsafe_w(board);
 
                 for j in 0..64 {
                     if possibility & 1u64 << j & safe_white != 0 {
@@ -647,7 +647,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.black_bishops & (1u64 << i) != 0 {
-                let bishop_moves = Movegen::possible_da(board, i) & !board.black_pieces & !board.black_king;
+                let bishop_moves = MoveService::possible_da(board, i) & !board.black_pieces & !board.black_king;
 
                 for j in 0..64 {
                     if bishop_moves & (1u64 << j) != 0 {
@@ -673,7 +673,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.black_rooks & (1u64 << i) != 0 {
-                let rook_moves = Movegen::possible_hv(board, i) & !board.black_pieces & !board.black_king;
+                let rook_moves = MoveService::possible_hv(board, i) & !board.black_pieces & !board.black_king;
 
                 for j in 0..64 {
                     if rook_moves & (1u64 << j) != 0 {
@@ -699,7 +699,7 @@ impl Movegen {
 
         for i in 0..64 {
             if board.black_queens & (1u64 << i) != 0 {
-                let queen_moves = (Movegen::possible_hv(board, i) | Movegen::possible_da(board, i))
+                let queen_moves = (MoveService::possible_hv(board, i) | MoveService::possible_da(board, i))
                     & !board.black_pieces
                     & !board.black_king;
 
@@ -741,7 +741,7 @@ impl Movegen {
                     possibility &= !(FILE_A | FILE_B) & !board.black_pieces;
                 }
 
-                let safe_black = !Movegen::unsafe_b(board);
+                let safe_black = !MoveService::unsafe_b(board);
 
                 for j in 0..64 {
                     if possibility & 1u64 << j & safe_black != 0 {
@@ -769,7 +769,7 @@ impl Movegen {
 
         // King side castle
         if board.white_castle_kingside {
-            let unsafe_w = Movegen::unsafe_w(board);
+            let unsafe_w = MoveService::unsafe_w(board);
 
             // Positions
             // 4 : King's position. Should not be in check.
@@ -791,7 +791,7 @@ impl Movegen {
 
         // Queen side castle
         if board.white_castle_queenside {
-            let unsafe_w = Movegen::unsafe_w(board);
+            let unsafe_w = MoveService::unsafe_w(board);
 
             // Positions
             // 4 : King's position. Should not be in check.
@@ -828,7 +828,7 @@ impl Movegen {
 
         // King side castle
         if board.black_castle_kingside {
-            let unsafe_b = Movegen::unsafe_b(board);
+            let unsafe_b = MoveService::unsafe_b(board);
 
             // Positions
             // 60 : King's position. Should not be in check.
@@ -850,7 +850,7 @@ impl Movegen {
 
         // Queen side castle
         if board.black_castle_queenside {
-            let unsafe_b = Movegen::unsafe_b(board);
+            let unsafe_b = MoveService::unsafe_b(board);
 
             // Positions
             // 60 : King's position. Should not be in check.
@@ -918,7 +918,7 @@ impl Movegen {
 
         for i in 0..64 {
             if bishop_queen & 1u64 << i != 0 {
-                unsafe_squares |= Movegen::possible_da(board, i);
+                unsafe_squares |= MoveService::possible_da(board, i);
             }
         }
 
@@ -928,7 +928,7 @@ impl Movegen {
 
         for i in 0..64 {
             if rook_queen & 1u64 << i != 0 {
-                unsafe_squares |= Movegen::possible_hv(board, i);
+                unsafe_squares |= MoveService::possible_hv(board, i);
             }
         }
 
@@ -1000,7 +1000,7 @@ impl Movegen {
 
         for i in 0..64 {
             if bishop_queen & 1u64 << i != 0 {
-                unsafe_squares |= Movegen::possible_da(board, i);
+                unsafe_squares |= MoveService::possible_da(board, i);
             }
         }
 
@@ -1010,7 +1010,7 @@ impl Movegen {
 
         for i in 0..64 {
             if rook_queen & 1u64 << i != 0 {
-                unsafe_squares |= Movegen::possible_hv(board, i);
+                unsafe_squares |= MoveService::possible_hv(board, i);
             }
         }
 
@@ -1044,7 +1044,7 @@ impl Movegen {
 #[test]
 fn pawn_capture_nw() {
     let board = Board::new("8/8/8/p5pp/P6P/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 31, to: 38 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1055,7 +1055,7 @@ fn pawn_capture_nw() {
 #[test]
 fn pawn_capture_ne() {
     let board = Board::new("8/8/8/pp5p/P6P/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 24, to: 33 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1066,7 +1066,7 @@ fn pawn_capture_ne() {
 #[test]
 fn pawn_move_n() {
     let board = Board::new("8/8/2p5/4p3/2P1P3/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 26, to: 34 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1077,7 +1077,7 @@ fn pawn_move_n() {
 #[test]
 fn pawn_move_nn() {
     let board = Board::new("8/8/6p1/2p1p3/p7/4P1P1/P1P5/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 8, to: 16 },
         Move::Normal { from: 10, to: 18 },
@@ -1094,7 +1094,7 @@ fn pawn_move_nn() {
 #[test]
 fn pawn_promotion_n() {
     let board = Board::new("8/3P4/8/8/8/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Promotion {
             from: 51,
@@ -1126,7 +1126,7 @@ fn pawn_promotion_n() {
 #[test]
 fn pawn_promotion_captures_n() {
     let board = Board::new("3pp3/3P4/8/8/8/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Promotion {
             from: 51,
@@ -1159,7 +1159,7 @@ fn pawn_promotion_captures_n() {
 #[test]
 fn en_passant_ne() {
     let board = Board::new("8/8/8/2pPp3/8/8/8/8 w - e6 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 35, to: 43 },
         Move::EnPassant {
@@ -1177,7 +1177,7 @@ fn en_passant_ne() {
 #[test]
 fn en_passant_nw() {
     let board = Board::new("8/8/8/2pPp3/8/8/8/8 w - c6 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 35, to: 43 },
         Move::EnPassant {
@@ -1195,7 +1195,7 @@ fn en_passant_nw() {
 #[test]
 fn en_passant_border_ne() {
     let board = Board::new("8/8/8/p6P/8/8/8/8 w - a6 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 39, to: 47 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1206,7 +1206,7 @@ fn en_passant_border_ne() {
 #[test]
 fn en_passant_border_nw() {
     let board = Board::new("8/8/8/P6p/8/8/8/8 w - h6 0 1");
-    let moves = Movegen::possible_wp(&board);
+    let moves = MoveService::possible_wp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 32, to: 40 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1217,7 +1217,7 @@ fn en_passant_border_nw() {
 #[test]
 fn pawn_capture_sw() {
     let board = Board::new("8/8/8/p6p/P5PP/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 39, to: 30 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1228,7 +1228,7 @@ fn pawn_capture_sw() {
 #[test]
 fn pawn_capture_se() {
     let board = Board::new("8/8/8/p6p/PP5P/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 32, to: 25 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1239,7 +1239,7 @@ fn pawn_capture_se() {
 #[test]
 fn pawn_move_s() {
     let board = Board::new("8/8/8/2p1p3/4P3/2P5/8/8 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 34, to: 26 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1250,7 +1250,7 @@ fn pawn_move_s() {
 #[test]
 fn pawn_move_ss() {
     let board = Board::new("8/p1p5/4p1p1/P7/2P1P3/6P1/8/8 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 48, to: 40 },
         Move::Normal { from: 50, to: 42 },
@@ -1267,7 +1267,7 @@ fn pawn_move_ss() {
 #[test]
 fn pawn_promotion_s() {
     let board = Board::new("8/8/8/8/8/8/3p4/8 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Promotion {
             from: 11,
@@ -1299,7 +1299,7 @@ fn pawn_promotion_s() {
 #[test]
 fn pawn_promotion_captures_s() {
     let board = Board::new("8/8/8/8/8/8/3p4/3PP3 w - - 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Promotion {
             from: 11,
@@ -1331,7 +1331,7 @@ fn pawn_promotion_captures_s() {
 #[test]
 fn en_passant_se() {
     let board = Board::new("8/8/8/8/2PpP3/8/8/8 b - e3 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 19 },
         Move::EnPassant {
@@ -1349,7 +1349,7 @@ fn en_passant_se() {
 #[test]
 fn en_passant_sw() {
     let board = Board::new("8/8/8/8/2PpP3/8/8/8 b - c3 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 19 },
         Move::EnPassant {
@@ -1366,7 +1366,7 @@ fn en_passant_sw() {
 #[test]
 fn en_passant_border_se() {
     let board = Board::new("8/8/8/8/P6p/8/8/8 b - h6 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 31, to: 23 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1377,7 +1377,7 @@ fn en_passant_border_se() {
 #[test]
 fn en_passant_border_sw() {
     let board = Board::new("8/8/8/8/p6P/8/8/8 b - a6 0 1");
-    let moves = Movegen::possible_bp(&board);
+    let moves = MoveService::possible_bp(&board);
     let correct_moves: Vec<Move> = vec![Move::Normal { from: 24, to: 16 }];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1388,7 +1388,7 @@ fn en_passant_border_sw() {
 #[test]
 fn w_rook_move_border() {
     let board = Board::new("8/8/8/8/3R4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wr(&board);
+    let moves = MoveService::possible_wr(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1414,7 +1414,7 @@ fn w_rook_move_border() {
 #[test]
 fn w_rook_move_block() {
     let board = Board::new("8/3P4/8/8/P2R1P2/3P4/8/8 w - - 0 1");
-    let moves = Movegen::possible_wr(&board);
+    let moves = MoveService::possible_wr(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 25 },
         Move::Normal { from: 27, to: 26 },
@@ -1431,7 +1431,7 @@ fn w_rook_move_block() {
 #[test]
 fn w_rook_move_capture() {
     let board = Board::new("8/3p4/8/8/p2R1p2/3p4/8/8 w - - 0 1");
-    let moves = Movegen::possible_wr(&board);
+    let moves = MoveService::possible_wr(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1452,7 +1452,7 @@ fn w_rook_move_capture() {
 #[test]
 fn b_rook_move_border() {
     let board = Board::new("8/8/8/8/3r4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_br(&board);
+    let moves = MoveService::possible_br(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1478,7 +1478,7 @@ fn b_rook_move_border() {
 #[test]
 fn b_rook_move_block() {
     let board = Board::new("8/3p4/8/8/p2r1p2/3p4/8/8 w - - 0 1");
-    let moves = Movegen::possible_br(&board);
+    let moves = MoveService::possible_br(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 25 },
         Move::Normal { from: 27, to: 26 },
@@ -1495,7 +1495,7 @@ fn b_rook_move_block() {
 #[test]
 fn b_rook_move_capture() {
     let board = Board::new("8/3P4/8/8/P2r1P2/3P4/8/8 w - - 0 1");
-    let moves = Movegen::possible_br(&board);
+    let moves = MoveService::possible_br(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1516,7 +1516,7 @@ fn b_rook_move_capture() {
 #[test]
 fn overflow() {
     let board = Board::new("8/8/8/8/8/8/8/B7 w - - 0 1");
-    let moves = Movegen::possible_wb(&board);
+    let moves = MoveService::possible_wb(&board);
 
     assert_eq!(moves.len(), 7);
 }
@@ -1524,7 +1524,7 @@ fn overflow() {
 #[test]
 fn w_bishop_move_border() {
     let board = Board::new("8/8/8/8/3B4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wb(&board);
+    let moves = MoveService::possible_wb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1549,7 +1549,7 @@ fn w_bishop_move_border() {
 #[test]
 fn w_bishop_move_block() {
     let board = Board::new("8/8/1P3P2/8/3B4/4P3/8/P7 w - - 0 1");
-    let moves = Movegen::possible_wb(&board);
+    let moves = MoveService::possible_wb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 9 },
         Move::Normal { from: 27, to: 18 },
@@ -1565,7 +1565,7 @@ fn w_bishop_move_block() {
 #[test]
 fn w_bishop_move_capture() {
     let board = Board::new("8/8/1p3p2/8/3B4/4p3/8/p7 w - - 0 1");
-    let moves = Movegen::possible_wb(&board);
+    let moves = MoveService::possible_wb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1585,7 +1585,7 @@ fn w_bishop_move_capture() {
 #[test]
 fn b_bishop_move_border() {
     let board = Board::new("8/8/8/8/3b4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_bb(&board);
+    let moves = MoveService::possible_bb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1610,7 +1610,7 @@ fn b_bishop_move_border() {
 #[test]
 fn b_bishop_move_block() {
     let board = Board::new("8/8/1p3p2/8/3b4/4p3/8/p7 w - - 0 1");
-    let moves = Movegen::possible_bb(&board);
+    let moves = MoveService::possible_bb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 9 },
         Move::Normal { from: 27, to: 18 },
@@ -1626,7 +1626,7 @@ fn b_bishop_move_block() {
 #[test]
 fn b_bishop_move_capture() {
     let board = Board::new("8/8/1P3P2/8/3b4/4P3/8/P7 w - - 0 1");
-    let moves = Movegen::possible_bb(&board);
+    let moves = MoveService::possible_bb(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1646,7 +1646,7 @@ fn b_bishop_move_capture() {
 #[test]
 fn w_queen_move_border() {
     let board = Board::new("8/8/8/8/3Q4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wq(&board);
+    let moves = MoveService::possible_wq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1685,7 +1685,7 @@ fn w_queen_move_border() {
 #[test]
 fn w_queen_move_block() {
     let board = Board::new("8/3P4/1P3P2/8/P2Q1P2/3PP3/8/P7 w - - 0 1");
-    let moves = Movegen::possible_wq(&board);
+    let moves = MoveService::possible_wq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 25 },
         Move::Normal { from: 27, to: 26 },
@@ -1706,7 +1706,7 @@ fn w_queen_move_block() {
 #[test]
 fn w_queen_move_capture() {
     let board = Board::new("8/3p4/1p3p2/8/p2Q1p2/3pp3/8/p7 w - - 0 1");
-    let moves = Movegen::possible_wq(&board);
+    let moves = MoveService::possible_wq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1735,7 +1735,7 @@ fn w_queen_move_capture() {
 #[test]
 fn b_queen_move_border() {
     let board = Board::new("8/8/8/8/3q4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_bq(&board);
+    let moves = MoveService::possible_bq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 0 },
         Move::Normal { from: 27, to: 9 },
@@ -1774,7 +1774,7 @@ fn b_queen_move_border() {
 #[test]
 fn b_queen_move_block() {
     let board = Board::new("8/3p4/1p3p2/8/p2q1p2/3pp3/8/p7 w - - 0 1");
-    let moves = Movegen::possible_bq(&board);
+    let moves = MoveService::possible_bq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 25 },
         Move::Normal { from: 27, to: 26 },
@@ -1795,7 +1795,7 @@ fn b_queen_move_block() {
 #[test]
 fn b_queen_move_capture() {
     let board = Board::new("8/3P4/1P3P2/8/P2q1P2/3PP3/8/P7 w - - 0 1");
-    let moves = Movegen::possible_bq(&board);
+    let moves = MoveService::possible_bq(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 24 },
         Move::Normal { from: 27, to: 25 },
@@ -1824,7 +1824,7 @@ fn b_queen_move_capture() {
 #[test]
 fn w_knight_move() {
     let board = Board::new("8/8/8/8/3N4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_wn(&board);
+    let moves = MoveService::possible_wn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 10 },
         Move::Normal { from: 27, to: 12 },
@@ -1845,7 +1845,7 @@ fn w_knight_move() {
 #[test]
 fn w_knight_capture() {
     let board = Board::new("8/8/2p1p3/1p3p2/3N4/1p3p2/2p1p3/8 w - - 0 1");
-    let moves = Movegen::possible_wn(&board);
+    let moves = MoveService::possible_wn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 10 },
         Move::Normal { from: 27, to: 12 },
@@ -1865,7 +1865,7 @@ fn w_knight_capture() {
 #[test]
 fn w_knight_block() {
     let board = Board::new("8/8/2P1P3/1P3P2/3N4/1P3P2/2P1P3/8 w - - 0 1");
-    let moves = Movegen::possible_wn(&board);
+    let moves = MoveService::possible_wn(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1876,7 +1876,7 @@ fn w_knight_block() {
 #[test]
 fn w_knight_border() {
     let board = Board::new("N6N/8/8/8/8/8/8/N6N w - - 0 1");
-    let moves = Movegen::possible_wn(&board);
+    let moves = MoveService::possible_wn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 0, to: 10 },
         Move::Normal { from: 0, to: 17 },
@@ -1896,7 +1896,7 @@ fn w_knight_border() {
 #[test]
 fn b_knight_move() {
     let board = Board::new("8/8/8/8/3n4/8/8/8 w - - 0 1");
-    let moves = Movegen::possible_bn(&board);
+    let moves = MoveService::possible_bn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 10 },
         Move::Normal { from: 27, to: 12 },
@@ -1916,7 +1916,7 @@ fn b_knight_move() {
 #[test]
 fn b_knight_capture() {
     let board = Board::new("8/8/2P1P3/1P3P2/3n4/1P3P2/2P1P3/8 w - - 0 1");
-    let moves = Movegen::possible_bn(&board);
+    let moves = MoveService::possible_bn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 10 },
         Move::Normal { from: 27, to: 12 },
@@ -1936,7 +1936,7 @@ fn b_knight_capture() {
 #[test]
 fn b_knight_block() {
     let board = Board::new("8/8/2p1p3/1p3p2/3n4/1p3p2/2p1p3/8 w - - 0 1");
-    let moves = Movegen::possible_bn(&board);
+    let moves = MoveService::possible_bn(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1947,7 +1947,7 @@ fn b_knight_block() {
 #[test]
 fn b_knight_border() {
     let board = Board::new("n6n/8/8/8/8/8/8/n6n w - - 0 1");
-    let moves = Movegen::possible_bn(&board);
+    let moves = MoveService::possible_bn(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 0, to: 10 },
         Move::Normal { from: 0, to: 17 },
@@ -1967,7 +1967,7 @@ fn b_knight_border() {
 #[test]
 fn w_king_move_capture() {
     let board = Board::new("8/8/8/2p1p3/3K4/2p1p3/8/8 w - - 0 1");
-    let moves = Movegen::possible_wk(&board);
+    let moves = MoveService::possible_wk(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 18 },
         Move::Normal { from: 27, to: 19 },
@@ -1987,7 +1987,7 @@ fn w_king_move_capture() {
 #[test]
 fn w_king_block() {
     let board = Board::new("8/8/8/2PPP3/2PKP3/2PPP3/8/8 w - - 0 1");
-    let moves = Movegen::possible_wk(&board);
+    let moves = MoveService::possible_wk(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -1998,7 +1998,7 @@ fn w_king_block() {
 #[test]
 fn b_king_move_capture() {
     let board = Board::new("8/8/8/2P1P3/3k4/2P1P3/8/8 w - - 0 1");
-    let moves = Movegen::possible_bk(&board);
+    let moves = MoveService::possible_bk(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Normal { from: 27, to: 18 },
         Move::Normal { from: 27, to: 19 },
@@ -2018,7 +2018,7 @@ fn b_king_move_capture() {
 #[test]
 fn b_king_block() {
     let board = Board::new("8/8/8/2ppp3/2pkp3/2ppp3/8/8 w - - 0 1");
-    let moves = Movegen::possible_bk(&board);
+    let moves = MoveService::possible_bk(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
     for m in moves {
@@ -2029,7 +2029,7 @@ fn b_king_block() {
 #[test]
 fn castling_w_kq() {
     let board = Board::new("8/8/8/8/8/8/8/R3K2R w KQ - 0 1");
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Castle {
             from: 4,
@@ -2051,7 +2051,7 @@ fn castling_w_kq() {
 #[test]
 fn castling_w_k() {
     let board = Board::new("8/8/8/8/8/8/8/R3K2R w K - 0 1");
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![Move::Castle {
         from: 4,
         to: 6,
@@ -2066,7 +2066,7 @@ fn castling_w_k() {
 #[test]
 fn castling_w_q() {
     let board = Board::new("8/8/8/8/8/8/8/R3K2R w Q - 0 1");
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![Move::Castle {
         from: 4,
         to: 2,
@@ -2082,7 +2082,7 @@ fn castling_w_q() {
 fn castling_w_unsafe() {
     let board = Board::new("2r3r1/8/8/8/8/8/8/R3K2R w KQ - 0 1");
 
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2090,7 +2090,7 @@ fn castling_w_unsafe() {
 #[test]
 fn castling_w_checked() {
     let board = Board::new("4r3/8/8/8/8/8/8/R3K2R w KQ - 0 1");
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2098,7 +2098,7 @@ fn castling_w_checked() {
 #[test]
 fn castling_w_blocked() {
     let board = Board::new("8/8/8/8/8/8/8/R2PKP1R w KQ - 0 1");
-    let moves = Movegen::possible_wc(&board);
+    let moves = MoveService::possible_wc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2106,7 +2106,7 @@ fn castling_w_blocked() {
 #[test]
 fn castling_b_kq() {
     let board = Board::new("r3k2r/8/8/8/8/8/8/8 w kq - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![
         Move::Castle {
             from: 60,
@@ -2128,7 +2128,7 @@ fn castling_b_kq() {
 #[test]
 fn castling_b_k() {
     let board = Board::new("r3k2r/8/8/8/8/8/8/8 w k - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![Move::Castle {
         from: 60,
         to: 62,
@@ -2143,7 +2143,7 @@ fn castling_b_k() {
 #[test]
 fn castling_b_q() {
     let board = Board::new("r3k2r/8/8/8/8/8/8/8 w q - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![Move::Castle {
         from: 60,
         to: 58,
@@ -2158,7 +2158,7 @@ fn castling_b_q() {
 #[test]
 fn castling_b_unsafe() {
     let board = Board::new("r3k2r/8/8/8/8/8/8/2R2R2 w q - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2166,7 +2166,7 @@ fn castling_b_unsafe() {
 #[test]
 fn castling_b_checked() {
     let board = Board::new("r3k2r/8/8/8/8/8/8/4R3 w q - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2174,7 +2174,7 @@ fn castling_b_checked() {
 #[test]
 fn castling_b_blocked() {
     let board = Board::new("r2pkp1r/8/8/8/8/8/8/8 w q - 0 1");
-    let moves = Movegen::possible_bc(&board);
+    let moves = MoveService::possible_bc(&board);
     let correct_moves: Vec<Move> = vec![];
     assert_eq!(moves.len(), correct_moves.len());
 }
@@ -2182,7 +2182,7 @@ fn castling_b_blocked() {
 #[test]
 fn w_unsafe_squares() {
     let board = Board::new("8/4r3/3n2b1/3p2n1/4K3/8/6q1/8 w - - 0 1");
-    let unsafe_squares: u64 = Movegen::unsafe_w(&board);
+    let unsafe_squares: u64 = MoveService::unsafe_w(&board);
     let correct_unsafe_squares: u64 = 1508443033184550880;
     assert_eq!(unsafe_squares, correct_unsafe_squares);
 }
@@ -2190,7 +2190,7 @@ fn w_unsafe_squares() {
 #[test]
 fn b_unsafe_squares() {
     let board = Board::new("8/4R3/3N2B1/6N1/4k3/3P4/6Q1/8 w - - 0 1");
-    let unsafe_squares: u64 = Movegen::unsafe_b(&board);
+    let unsafe_squares: u64 = MoveService::unsafe_b(&board);
     let correct_unsafe_squares: u64 = 1508443033184550880;
     assert_eq!(unsafe_squares, correct_unsafe_squares);
 }

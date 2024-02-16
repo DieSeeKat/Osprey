@@ -1,10 +1,8 @@
-pub use self::board::Board;
-pub use self::movegen::Movegen;
-pub use self::piece_move::Move;
+pub use self::models::{ Board, Move };
+pub use self::services::MoveService;
 
-pub mod board;
-pub mod movegen;
-pub mod piece_move;
+pub mod models;
+pub mod services;
 
 const FILE_A: u64 = 72340172838076673;
 const FILE_B: u64 = 144680345676153346;

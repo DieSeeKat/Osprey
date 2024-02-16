@@ -1,4 +1,4 @@
-use crate::board::{Board, Move, Movegen};
+use crate::board::{Board, Move, MoveService};
 use std::thread;
 
 pub struct Perft {}
@@ -12,9 +12,9 @@ impl Perft {
         let mut nodes = 0;
 
         let moves = if board.white_turn {
-            Movegen::possible_white(board)
+            MoveService::possible_white(board)
         } else {
-            Movegen::possible_black(board)
+            MoveService::possible_black(board)
         };
 
         let chunks = moves.chunks(moves.len() / num_threads as usize);
@@ -57,9 +57,9 @@ impl Perft {
         let mut nodes = 0;
 
         let moves = if board.white_turn {
-            Movegen::possible_white(board)
+            MoveService::possible_white(board)
         } else {
-            Movegen::possible_black(board)
+            MoveService::possible_black(board)
         };
 
         for m in moves {

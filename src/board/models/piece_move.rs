@@ -1,4 +1,4 @@
-use super::Piece;
+use crate::board::Piece;
 
 /// A move of a piece on the board.
 #[allow(dead_code)]

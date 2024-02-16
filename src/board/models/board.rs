@@ -1,5 +1,5 @@
 use std::fmt;
-use super::{Movegen, Move, Piece, DIAGONALS, ANTI_DIAGONALS, RANKS, FILES, FILE_A, NOT_RANK_1_8, FILE_H, NOT_RANK_1_2, RANK_2, RANK_8, KING_SPAN, FILE_G, FILE_B, NOT_RANK_7_8, RANK_7, RANK_1, KNIGHT_SPAN,};
+use crate::board::{MoveService, Move, Piece, DIAGONALS, ANTI_DIAGONALS, RANKS, FILES, FILE_A, NOT_RANK_1_8, FILE_H, NOT_RANK_1_2, RANK_2, RANK_8, KING_SPAN, FILE_G, FILE_B, NOT_RANK_7_8, RANK_7, RANK_1, KNIGHT_SPAN,};
 
 ///
 /// A chess board.
@@ -512,8 +512,8 @@ impl Board {
         };
 
         // check if move is legal
-        if (new_board.white_king & Movegen::unsafe_w(&new_board) == 0 && self.white_turn)
-            || (new_board.black_king & Movegen::unsafe_b(&new_board) == 0 && !self.white_turn)
+        if (new_board.white_king & MoveService::unsafe_w(&new_board) == 0 && self.white_turn)
+            || (new_board.black_king & MoveService::unsafe_b(&new_board) == 0 && !self.white_turn)
         {
             // return new board
             return Ok(new_board);
